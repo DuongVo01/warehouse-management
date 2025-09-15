@@ -19,11 +19,14 @@ const Dashboard = () => {
         inventoryAPI.getLowStock(),
         inventoryAPI.getExpiring()
       ]);
-      setStats(statsRes.data);
-      setLowStockProducts(lowStockRes.data);
-      setExpiringProducts(expiringRes.data);
+      setStats(statsRes.data?.data || {});
+      setLowStockProducts(Array.isArray(lowStockRes.data?.data) ? lowStockRes.data.data : []);
+      setExpiringProducts(Array.isArray(expiringRes.data?.data) ? expiringRes.data.data : []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      setStats({});
+      setLowStockProducts([]);
+      setExpiringProducts([]);
     }
   };
 
@@ -89,7 +92,7 @@ const Dashboard = () => {
           <Card title="Sản phẩm sắp hết hàng" size="small">
             <Table
               columns={lowStockColumns}
-              dataSource={lowStockProducts}
+              dataSource={Array.isArray(lowStockProducts) ? lowStockProducts : []}
               pagination={false}
               size="small"
             />
@@ -99,7 +102,7 @@ const Dashboard = () => {
           <Card title="Sản phẩm sắp hết hạn" size="small">
             <Table
               columns={expiringColumns}
-              dataSource={expiringProducts}
+              dataSource={Array.isArray(expiringProducts) ? expiringProducts : []}
               pagination={false}
               size="small"
             />

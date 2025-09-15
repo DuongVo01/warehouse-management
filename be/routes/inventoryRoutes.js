@@ -67,4 +67,28 @@ router.get(
   inventoryController.getTransactionHistory
 );
 
+// API sản phẩm sắp hết hạn
+router.get(
+  '/expiring',
+  auth,
+  role(['Admin', 'Staff', 'Accountant']),
+  inventoryController.getExpiringProducts
+);
+
+// API sản phẩm sắp hết hàng
+router.get(
+  '/low-stock',
+  auth,
+  role(['Admin', 'Staff', 'Accountant']),
+  inventoryController.getLowStockProducts
+);
+
+// API thống kê kho
+router.get(
+  '/stats',
+  auth,
+  role(['Admin', 'Staff', 'Accountant']),
+  inventoryController.getInventoryStats
+);
+
 module.exports = router;

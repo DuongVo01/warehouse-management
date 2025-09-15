@@ -59,6 +59,10 @@ const searchValidationSchema = {
     isString: { errorMessage: 'Đơn vị tính phải là chuỗi' },
     optional: true,
   },
+  search: {
+    isString: { errorMessage: 'Từ khóa tìm kiếm phải là chuỗi' },
+    optional: true,
+  },
 };
 
 // API tạo sản phẩm (UC01)

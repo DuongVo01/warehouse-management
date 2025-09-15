@@ -11,7 +11,7 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, envConfig.JWT_SECRET);
-    const user = await User.findByPk(decoded.UserID, {
+    const user = await User.findByPk(decoded.userId, {
       attributes: { exclude: ['PasswordHash'] }
     });
 

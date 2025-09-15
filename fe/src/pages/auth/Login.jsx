@@ -10,12 +10,14 @@ const Login = ({ onLoginSuccess }) => {
   const onFinish = async (values) => {
     try {
       const response = await authAPI.login(values);
+      console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       message.success('Đăng nhập thành công');
       onLoginSuccess?.();
       navigate('/');
     } catch (error) {
+      console.error('Login error:', error);
       message.error('Đăng nhập thất bại');
     }
   };

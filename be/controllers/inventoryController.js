@@ -1,5 +1,6 @@
 const { InventoryTransaction, InventoryBalance, Product, Supplier, User } = require('../models');
 const { sequelize } = require('../config/database-sqlite');
+const { Op } = require('sequelize');
 
 // UC02 - Nhập kho
 const importInventory = async (req, res) => {
@@ -152,9 +153,109 @@ const getTransactionHistory = async (req, res) => {
   }
 };
 
+// Sản phẩm sắp hết hạn
+const getExpiringProducts = async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const expiryThreshold = new Date();
+    expiryThreshold.setDate(expiryThreshold.getDate() + parseInt(days));
+
+    const expiringProducts = await InventoryBalance.findAll({
+      include: [{
+        model: Product,
+        where: {
+          ExpiryDate: {
+            [Op.lte]: expiryThreshold,
+            [Op.gte]: new Date()
+          },
+          IsActive: true
+        },
+        attributes: ['SKU', 'Name', 'Unit', 'ExpiryDate', 'Location']
+      }],
+      where: {
+        Quantity: { [Op.gt]: 0 }
+      },
+      order: [[Product, 'ExpiryDate', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: expiringProducts
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Sản phẩm sắp hết hàng
+const getLowStockProducts = async (req, res) => {
+  try {
+    const { threshold = 10 } = req.query;
+
+    const lowStockProducts = await InventoryBalance.findAll({
+      include: [{
+        model: Product,
+        where: { IsActive: true },
+        attributes: ['SKU', 'Name', 'Unit', 'Location']
+      }],
+      where: {
+        Quantity: { [Op.lte]: parseInt(threshold) }
+      },
+      order: [['Quantity', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: lowStockProducts
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Thống kê tổng quan kho
+const getInventoryStats = async (req, res) => {
+  try {
+    const totalProducts = await Product.count({ where: { IsActive: true } });
+    const totalQuantity = await InventoryBalance.sum('Quantity');
+    const lowStockCount = await InventoryBalance.count({
+      where: { Quantity: { [Op.lte]: 10 } },
+      include: [{ model: Product, where: { IsActive: true } }]
+    });
+    
+    const expiryThreshold = new Date();
+    expiryThreshold.setDate(expiryThreshold.getDate() + 30);
+    const expiringCount = await InventoryBalance.count({
+      where: { Quantity: { [Op.gt]: 0 } },
+      include: [{
+        model: Product,
+        where: {
+          ExpiryDate: { [Op.lte]: expiryThreshold, [Op.gte]: new Date() },
+          IsActive: true
+        }
+      }]
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalProducts,
+        totalQuantity: totalQuantity || 0,
+        lowStockCount,
+        expiringCount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   importInventory,
   exportInventory,
   getInventoryBalance,
   getTransactionHistory,
+  getExpiringProducts,
+  getLowStockProducts,
+  getInventoryStats,
 };

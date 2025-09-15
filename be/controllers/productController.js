@@ -4,7 +4,20 @@ const { Op } = require('sequelize');
 // UC01 - Tạo sản phẩm mới
 const createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const { sku, name, unit, costPrice, salePrice, expiryDate, location, isActive } = req.body;
+    
+    const productData = {
+      SKU: sku,
+      Name: name,
+      Unit: unit,
+      CostPrice: costPrice,
+      SalePrice: salePrice,
+      ExpiryDate: expiryDate,
+      Location: location,
+      IsActive: isActive !== undefined ? isActive : true
+    };
+    
+    const product = await Product.create(productData);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
@@ -61,12 +74,22 @@ const getProductById = async (req, res) => {
 // UC01 - Tra cứu sản phẩm
 const searchProducts = async (req, res) => {
   try {
-    const { sku, name, unit, page = 1, limit = 10 } = req.query;
+    const { sku, name, unit, search, page = 1, limit = 10 } = req.query;
+    console.log('Search params:', { sku, name, unit, search });
     const where = {};
     
-    if (sku) where.SKU = { [Op.iLike]: `%${sku}%` };
-    if (name) where.Name = { [Op.iLike]: `%${name}%` };
-    if (unit) where.Unit = { [Op.iLike]: `%${unit}%` };
+    if (search) {
+      where[Op.or] = [
+        { SKU: { [Op.like]: `%${search}%` } },
+        { Name: { [Op.like]: `%${search}%` } }
+      ];
+    } else {
+      if (sku) where.SKU = { [Op.like]: `%${sku}%` };
+      if (name) where.Name = { [Op.like]: `%${name}%` };
+      if (unit) where.Unit = { [Op.like]: `%${unit}%` };
+    }
+
+    console.log('Where clause:', where);
 
     const products = await Product.findAndCountAll({
       where,
@@ -74,6 +97,8 @@ const searchProducts = async (req, res) => {
       offset: (parseInt(page) - 1) * parseInt(limit),
       order: [['CreatedAt', 'DESC']]
     });
+
+    console.log('Found products:', products.count);
 
     res.json({
       success: true,
@@ -86,6 +111,7 @@ const searchProducts = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Search error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
