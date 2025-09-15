@@ -141,17 +141,37 @@ const exportInventory = async (req, res) => {
 // UC04 - Xem tồn kho
 const getInventoryBalance = async (req, res) => {
   try {
-    const { ProductID, page = 1, limit = 10 } = req.query;
+    const { ProductID, search, page = 1, limit = 10 } = req.query;
+    console.log('Backend search params:', { ProductID, search, page, limit });
     const where = {};
+    const productWhere = {};
     
     if (ProductID) where.ProductID = ProductID;
+    
+    // Tìm kiếm theo tên sản phẩm, SKU hoặc vị trí
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      productWhere[Op.or] = [
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.Name')), 'LIKE', `%${searchTerm.toLowerCase()}%`),
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.SKU')), 'LIKE', `%${searchTerm.toLowerCase()}%`),
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.Location')), 'LIKE', `%${searchTerm.toLowerCase()}%`)
+      ];
+      console.log('Product where condition:', JSON.stringify(productWhere, null, 2));
+    }
+
+    const includeOptions = {
+      model: Product,
+      attributes: ['SKU', 'Name', 'Unit', 'Location', 'ExpiryDate']
+    };
+    
+    if (Object.keys(productWhere).length > 0) {
+      includeOptions.where = productWhere;
+      includeOptions.required = true; // INNER JOIN để chỉ lấy sản phẩm khớp điều kiện
+    }
 
     const balances = await InventoryBalance.findAndCountAll({
       where,
-      include: [{
-        model: Product,
-        attributes: ['SKU', 'Name', 'Unit', 'Location']
-      }],
+      include: [includeOptions],
       limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
       order: [['LastUpdated', 'DESC']]
