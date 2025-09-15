@@ -1,12 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, InputNumber, Button, Table, Space, DatePicker, message } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { inventoryAPI } from '../../services/api/inventoryAPI';
+import { productAPI } from '../../services/api/productAPI';
+import dayjs from 'dayjs';
 
 const InventoryImport = () => {
   const [form] = Form.useForm();
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadProducts();
+    loadSuppliers();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const response = await productAPI.getProducts({ limit: 100 });
+      if (response.data.success) {
+        const activeProducts = response.data.data.filter(p => p.IsActive !== false);
+        setProducts(activeProducts);
+      }
+    } catch (error) {
+      message.error('Lỗi tải danh sách sản phẩm');
+    }
+  };
+
+  const loadSuppliers = async () => {
+    // Tạm thời dùng dữ liệu giả
+    setSuppliers([
+      { SupplierID: 1, Name: 'Nhà cung cấp A' },
+      { SupplierID: 2, Name: 'Nhà cung cấp B' },
+      { SupplierID: 3, Name: 'Nhà cung cấp C' }
+    ]);
+  };
 
   const columns = [
     { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
@@ -30,14 +60,30 @@ const InventoryImport = () => {
   ];
 
   const addItem = (values) => {
-    const product = products.find(p => p.productId === values.productId);
-    const newItem = {
-      productId: values.productId,
-      productName: product?.name,
-      quantity: values.quantity,
-      unitPrice: values.unitPrice
-    };
-    setItems([...items, newItem]);
+    const product = products.find(p => p.ProductID === values.productId);
+    if (!product) {
+      message.error('Vui lòng chọn sản phẩm');
+      return;
+    }
+    
+    // Kiểm tra sản phẩm đã có trong danh sách chưa
+    const existingIndex = items.findIndex(item => item.productId === values.productId);
+    if (existingIndex >= 0) {
+      // Cập nhật số lượng nếu đã có
+      const updatedItems = [...items];
+      updatedItems[existingIndex].quantity += values.quantity;
+      setItems(updatedItems);
+    } else {
+      // Thêm mới
+      const newItem = {
+        productId: values.productId,
+        productName: `${product.SKU} - ${product.Name}`,
+        quantity: values.quantity,
+        unitPrice: values.unitPrice
+      };
+      setItems([...items, newItem]);
+    }
+    
     form.resetFields(['productId', 'quantity', 'unitPrice']);
   };
 
@@ -51,17 +97,33 @@ const InventoryImport = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const importData = {
-        ...values,
-        items
-      };
-      // API call here
-      message.success('Nhập kho thành công');
+      // Gọi API cho từng sản phẩm
+      for (const item of items) {
+        const importData = {
+          productID: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          supplierID: values.supplierId,
+          note: values.note || 'Nhập kho'
+        };
+        
+        await inventoryAPI.createImport(importData);
+      }
+      
+      message.success(`Nhập kho thành công ${items.length} sản phẩm`);
       form.resetFields();
       setItems([]);
     } catch (error) {
-      message.error('Lỗi nhập kho');
+      console.error('Import error:', error);
+      if (error.response?.status === 401) {
+        message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
+      } else {
+        message.error(`Lỗi nhập kho: ${error.response?.data?.message || error.message}`);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,13 +138,13 @@ const InventoryImport = () => {
           <Form.Item name="supplierId" label="Nhà cung cấp" rules={[{ required: true }]}>
             <Select placeholder="Chọn nhà cung cấp">
               {suppliers.map(supplier => (
-                <Select.Option key={supplier.supplierId} value={supplier.supplierId}>
-                  {supplier.name}
+                <Select.Option key={supplier.SupplierID} value={supplier.SupplierID}>
+                  {supplier.Name}
                 </Select.Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="importDate" label="Ngày nhập" rules={[{ required: true }]}>
+          <Form.Item name="importDate" label="Ngày nhập" initialValue={dayjs()}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
         </div>
@@ -91,10 +153,16 @@ const InventoryImport = () => {
           <h4>Thêm sản phẩm</h4>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '16px', alignItems: 'end' }}>
             <Form.Item name="productId" label="Sản phẩm">
-              <Select placeholder="Chọn sản phẩm">
+              <Select 
+                placeholder="Chọn sản phẩm" 
+                showSearch
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+              >
                 {products.map(product => (
-                  <Select.Option key={product.productId} value={product.productId}>
-                    {product.name}
+                  <Select.Option key={product.ProductID} value={product.ProductID}>
+                    {product.SKU} - {product.Name}
                   </Select.Option>
                 ))}
               </Select>
@@ -122,14 +190,19 @@ const InventoryImport = () => {
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <Space>
-          <Button type="primary" htmlType="submit">
-            Lưu phiếu nhập
-          </Button>
-          <Button onClick={() => { form.resetFields(); setItems([]); }}>
-            Hủy
-          </Button>
-        </Space>
+        <div style={{ textAlign: 'right', marginTop: '16px', padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
+          <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 'bold' }}>
+            Tổng tiền: {items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toLocaleString()} đ
+          </div>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              Lưu phiếu nhập
+            </Button>
+            <Button onClick={() => { form.resetFields(); setItems([]); }} disabled={loading}>
+              Hủy
+            </Button>
+          </Space>
+        </div>
       </Form>
     </div>
   );

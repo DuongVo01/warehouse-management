@@ -16,7 +16,11 @@ const importSchema = {
     notEmpty: { errorMessage: 'Số lượng là bắt buộc' }
   },
   unitPrice: {
-    isDecimal: { errorMessage: 'Đơn giá phải là số thập phân' },
+    isNumeric: { errorMessage: 'Đơn giá phải là số' },
+    optional: true
+  },
+  supplierID: {
+    isInt: { errorMessage: 'SupplierID phải là số nguyên' },
     optional: true
   }
 };
@@ -30,6 +34,9 @@ const exportSchema = {
   quantity: {
     isInt: { options: { min: 1 }, errorMessage: 'Số lượng phải là số nguyên dương' },
     notEmpty: { errorMessage: 'Số lượng là bắt buộc' }
+  },
+  customerInfo: {
+    notEmpty: { errorMessage: 'Thông tin khách hàng là bắt buộc' }
   }
 };
 

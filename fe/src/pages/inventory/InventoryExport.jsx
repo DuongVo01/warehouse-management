@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Button, Table, Space, DatePicker, message, Select } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { inventoryAPI } from '../../services/api/inventoryAPI';
+import dayjs from 'dayjs';
 
 const InventoryExport = () => {
   const [form] = Form.useForm();
   const [items, setItems] = useState([]);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const response = await inventoryAPI.getBalance({ limit: 100 });
+      if (response.data.success) {
+        const productsWithStock = response.data.data.filter(item => item.Quantity > 0);
+        setProducts(productsWithStock);
+      }
+    } catch (error) {
+      message.error('Lỗi tải danh sách sản phẩm');
+    }
+  };
 
   const columns = [
     { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
@@ -28,19 +47,38 @@ const InventoryExport = () => {
   ];
 
   const addItem = (values) => {
-    const product = products.find(p => p.productId === values.productId);
-    if (values.quantity > product?.availableStock) {
+    const product = products.find(p => p.ProductID === values.productId);
+    if (!product) {
+      message.error('Vui lòng chọn sản phẩm');
+      return;
+    }
+    
+    if (values.quantity > product.Quantity) {
       message.error('Số lượng xuất vượt quá tồn kho');
       return;
     }
 
-    const newItem = {
-      productId: values.productId,
-      productName: product?.name,
-      availableStock: product?.availableStock,
-      quantity: values.quantity
-    };
-    setItems([...items, newItem]);
+    // Kiểm tra sản phẩm đã có trong danh sách chưa
+    const existingIndex = items.findIndex(item => item.productId === values.productId);
+    if (existingIndex >= 0) {
+      const updatedItems = [...items];
+      const newQuantity = updatedItems[existingIndex].quantity + values.quantity;
+      if (newQuantity > product.Quantity) {
+        message.error('Tổng số lượng xuất vượt quá tồn kho');
+        return;
+      }
+      updatedItems[existingIndex].quantity = newQuantity;
+      setItems(updatedItems);
+    } else {
+      const newItem = {
+        productId: values.productId,
+        productName: `${product.Product?.SKU} - ${product.Product?.Name}`,
+        availableStock: product.Quantity,
+        quantity: values.quantity
+      };
+      setItems([...items, newItem]);
+    }
+    
     form.resetFields(['productId', 'quantity']);
   };
 
@@ -54,17 +92,33 @@ const InventoryExport = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const exportData = {
-        ...values,
-        items
-      };
-      // API call here
-      message.success('Xuất kho thành công');
+      // Gọi API cho từng sản phẩm
+      for (const item of items) {
+        const exportData = {
+          productID: item.productId,
+          quantity: item.quantity,
+          customerInfo: values.customerInfo,
+          note: values.note || 'Xuất kho'
+        };
+        
+        await inventoryAPI.createExport(exportData);
+      }
+      
+      message.success(`Xuất kho thành công ${items.length} sản phẩm`);
       form.resetFields();
       setItems([]);
+      loadProducts(); // Tải lại danh sách sản phẩm
     } catch (error) {
-      message.error('Lỗi xuất kho');
+      console.error('Export error:', error);
+      if (error.response?.status === 401) {
+        message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
+      } else {
+        message.error(`Lỗi xuất kho: ${error.response?.data?.message || error.message}`);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,7 +133,7 @@ const InventoryExport = () => {
           <Form.Item name="customerInfo" label="Thông tin khách hàng" rules={[{ required: true }]}>
             <Input placeholder="Tên khách hàng hoặc mã đơn hàng" />
           </Form.Item>
-          <Form.Item name="exportDate" label="Ngày xuất" rules={[{ required: true }]}>
+          <Form.Item name="exportDate" label="Ngày xuất" initialValue={dayjs()}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
         </div>
@@ -88,10 +142,16 @@ const InventoryExport = () => {
           <h4>Thêm sản phẩm xuất</h4>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '16px', alignItems: 'end' }}>
             <Form.Item name="productId" label="Sản phẩm">
-              <Select placeholder="Chọn sản phẩm">
+              <Select 
+                placeholder="Chọn sản phẩm"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+              >
                 {products.map(product => (
-                  <Select.Option key={product.productId} value={product.productId}>
-                    {product.name} (Tồn: {product.availableStock})
+                  <Select.Option key={product.ProductID} value={product.ProductID}>
+                    {product.Product?.SKU} - {product.Product?.Name} (Tồn: {product.Quantity})
                   </Select.Option>
                 ))}
               </Select>
@@ -117,10 +177,10 @@ const InventoryExport = () => {
         </Form.Item>
 
         <Space>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" loading={loading}>
             Lưu phiếu xuất
           </Button>
-          <Button onClick={() => { form.resetFields(); setItems([]); }}>
+          <Button onClick={() => { form.resetFields(); setItems([]); }} disabled={loading}>
             Hủy
           </Button>
         </Space>

@@ -6,13 +6,45 @@ const { Op } = require('sequelize');
 const importInventory = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { ProductID, Quantity, UnitPrice, SupplierID, Note } = req.body;
+    const { productID, quantity, unitPrice, supplierID, note } = req.body;
+    const ProductID = productID;
+    const Quantity = quantity;
+    const UnitPrice = unitPrice;
+    const SupplierID = supplierID;
+    const Note = note;
     
     // Kiểm tra sản phẩm tồn tại
     const product = await Product.findByPk(ProductID);
     if (!product) {
       await transaction.rollback();
       return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
+    }
+
+    // Kiểm tra dữ liệu bắt buộc
+    if (!Quantity || Quantity <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({ success: false, message: 'Số lượng phải lớn hơn 0' });
+    }
+
+    if (!UnitPrice || UnitPrice < 0) {
+      await transaction.rollback();
+      return res.status(400).json({ success: false, message: 'Đơn giá không hợp lệ' });
+    }
+
+    // Kiểm tra user
+    if (!req.user || !req.user.UserID) {
+      await transaction.rollback();
+      return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
+    }
+
+    // Kiểm tra supplier nếu có
+    if (SupplierID) {
+      const { Supplier } = require('../models');
+      const supplier = await Supplier.findByPk(SupplierID);
+      if (!supplier) {
+        await transaction.rollback();
+        return res.status(404).json({ success: false, message: 'Nhà cung cấp không tồn tại' });
+      }
     }
 
     // Tạo giao dịch nhập kho
@@ -50,7 +82,30 @@ const importInventory = async (req, res) => {
 const exportInventory = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { ProductID, Quantity, CustomerInfo, Note } = req.body;
+    const { productID, quantity, customerInfo, note } = req.body;
+    const ProductID = productID;
+    const Quantity = quantity;
+    const CustomerInfo = customerInfo;
+    const Note = note;
+
+    // Kiểm tra user
+    if (!req.user || !req.user.UserID) {
+      await transaction.rollback();
+      return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
+    }
+
+    // Kiểm tra sản phẩm tồn tại
+    const product = await Product.findByPk(ProductID);
+    if (!product) {
+      await transaction.rollback();
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
+    }
+
+    // Kiểm tra dữ liệu bắt buộc
+    if (!Quantity || Quantity <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({ success: false, message: 'Số lượng phải lớn hơn 0' });
+    }
     
     // Kiểm tra tồn kho
     const balance = await InventoryBalance.findOne({ where: { ProductID } });
