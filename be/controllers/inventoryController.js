@@ -195,11 +195,18 @@ const getInventoryBalance = async (req, res) => {
 // Lịch sử giao dịch
 const getTransactionHistory = async (req, res) => {
   try {
-    const { ProductID, TransactionType, page = 1, limit = 10 } = req.query;
+    const { ProductID, TransactionType, startDate, endDate, page = 1, limit = 10 } = req.query;
     const where = {};
     
     if (ProductID) where.ProductID = ProductID;
     if (TransactionType) where.TransactionType = TransactionType;
+    
+    // Lọc theo ngày
+    if (startDate && endDate) {
+      where.CreatedAt = {
+        [Op.between]: [new Date(startDate), new Date(endDate + ' 23:59:59')]
+      };
+    }
 
     const transactions = await InventoryTransaction.findAndCountAll({
       where,
