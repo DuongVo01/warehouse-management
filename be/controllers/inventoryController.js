@@ -311,11 +311,28 @@ const getInventoryStats = async (req, res) => {
       }]
     });
 
+    // Tính tổng giá trị kho
+    const inventoryWithProducts = await InventoryBalance.findAll({
+      include: [{
+        model: Product,
+        where: { IsActive: true },
+        attributes: ['CostPrice']
+      }],
+      where: { Quantity: { [Op.gt]: 0 } }
+    });
+    
+    const totalValue = inventoryWithProducts.reduce((sum, item) => {
+      const costPrice = item.Product?.CostPrice || 0;
+      const quantity = item.Quantity || 0;
+      return sum + (costPrice * quantity);
+    }, 0);
+
     res.json({
       success: true,
       data: {
         totalProducts,
         totalQuantity: totalQuantity || 0,
+        totalValue,
         lowStockCount,
         expiringCount
       }

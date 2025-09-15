@@ -57,7 +57,18 @@ const ReportList = () => {
 
   const transactionColumns = [
     { title: 'Mã GD', key: 'id', 
-      render: (_, record) => record.TransactionID || record.transaction_i_d || '-'
+      render: (_, record) => {
+        const id = record.TransactionID || record.transaction_i_d;
+        const date = record.CreatedAt || record.created_at;
+        const quantity = record.Quantity || record.quantity || 0;
+        const type = quantity > 0 ? 'NK' : 'XK'; // NK = Nhập kho, XK = Xuất kho
+        
+        if (id && date) {
+          const dateStr = new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
+          return `${type}${dateStr}${String(id).padStart(4, '0')}`;
+        }
+        return id ? `${type}${String(id).padStart(6, '0')}` : '-';
+      }
     },
     { title: 'Loại', key: 'type', 
       render: (_, record) => {
@@ -191,15 +202,31 @@ const ReportList = () => {
         }));
         break;
       case 'transactions':
-        exportData = reportData.map((item, index) => ({
-          'STT': index + 1,
-          'Mã GD': item.TransactionID,
-          'Loại': item.TransactionType === 'Import' ? 'Nhập' : 'Xuất',
-          'Sản phẩm': item.Product?.Name || '',
-          'Số lượng': item.Quantity,
-          'Đơn giá': item.UnitPrice || 0,
-          'Ngày': new Date(item.CreatedAt).toLocaleDateString('vi-VN')
-        }));
+        exportData = reportData.map((item, index) => {
+          // Tạo mã GD giống như trên bảng
+          const id = item.TransactionID || item.transaction_i_d;
+          const date = item.CreatedAt || item.created_at;
+          const quantity = item.Quantity || item.quantity || 0;
+          const type = quantity > 0 ? 'NK' : 'XK';
+          
+          let transactionCode = '-';
+          if (id && date) {
+            const dateStr = new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
+            transactionCode = `${type}${dateStr}${String(id).padStart(4, '0')}`;
+          } else if (id) {
+            transactionCode = `${type}${String(id).padStart(6, '0')}`;
+          }
+          
+          return {
+            'STT': index + 1,
+            'Mã GD': transactionCode,
+            'Loại': quantity > 0 ? 'Nhập' : 'Xuất',
+            'Sản phẩm': item.Product?.Name || item.Product?.name || '',
+            'Số lượng': Math.abs(quantity),
+            'Đơn giá': item.UnitPrice || item.unit_price || 0,
+            'Ngày': date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+          };
+        });
         break;
       default:
         exportData = reportData.map((item, index) => ({
@@ -268,7 +295,8 @@ const ReportList = () => {
               title="Tổng giá trị kho"
               value={stats.totalValue || 0}
               prefix={<RiseOutlined />}
-              suffix="đ"
+              formatter={(value) => `${Number(value).toLocaleString('vi-VN')} đ`}
+              valueStyle={{ color: '#3f8600' }}
             />
           </Card>
         </Col>
