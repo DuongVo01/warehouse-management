@@ -16,8 +16,8 @@ const Dashboard = () => {
     try {
       const [statsRes, lowStockRes, expiringRes] = await Promise.all([
         inventoryAPI.getStats(),
-        inventoryAPI.getLowStock(),
-        inventoryAPI.getExpiring()
+        inventoryAPI.getLowStockProducts({ limit: 10 }),
+        inventoryAPI.getExpiringProducts({ limit: 10 })
       ]);
       setStats(statsRes.data?.data || {});
       setLowStockProducts(Array.isArray(lowStockRes.data?.data) ? lowStockRes.data.data : []);
@@ -31,15 +31,25 @@ const Dashboard = () => {
   };
 
   const lowStockColumns = [
-    { title: 'Sản phẩm', dataIndex: 'name', key: 'name' },
-    { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity' },
-    { title: 'Vị trí', dataIndex: 'location', key: 'location' }
+    { title: 'Mã SP', dataIndex: ['Product', 'SKU'], key: 'sku' },
+    { title: 'Sản phẩm', dataIndex: ['Product', 'Name'], key: 'name' },
+    { title: 'Tồn kho', dataIndex: 'Quantity', key: 'quantity',
+      render: (value) => <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{value}</span>
+    },
+    { title: 'Vị trí', dataIndex: ['Product', 'Location'], key: 'location' }
   ];
 
   const expiringColumns = [
-    { title: 'Sản phẩm', dataIndex: 'name', key: 'name' },
-    { title: 'Hạn sử dụng', dataIndex: 'expiryDate', key: 'expiryDate' },
-    { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity' }
+    { title: 'Mã SP', dataIndex: ['Product', 'SKU'], key: 'sku' },
+    { title: 'Sản phẩm', dataIndex: ['Product', 'Name'], key: 'name' },
+    { title: 'Hạn sử dụng', dataIndex: ['Product', 'ExpiryDate'], key: 'expiryDate',
+      render: (date) => (
+        <span style={{ color: '#fa8c16', fontWeight: 'bold' }}>
+          {date ? new Date(date).toLocaleDateString('vi-VN') : '-'}
+        </span>
+      )
+    },
+    { title: 'Số lượng', dataIndex: 'Quantity', key: 'quantity' }
   ];
 
   return (
@@ -60,8 +70,9 @@ const Dashboard = () => {
           <Card>
             <Statistic
               title="Tổng tồn kho"
-              value={stats.totalStock || 0}
+              value={stats.totalQuantity || 0}
               prefix={<InboxOutlined />}
+              formatter={(value) => `${Number(value).toLocaleString('vi-VN')} sản phẩm`}
             />
           </Card>
         </Col>
