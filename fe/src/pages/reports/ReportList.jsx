@@ -9,7 +9,7 @@ import ReportTable from './components/ReportTable';
 // Hooks & Utils
 import { useReports } from './hooks/useReports';
 import { getColumnsByType } from './utils/reportColumns';
-import { exportToExcel } from './utils/exportUtils';
+import { exportToExcel, exportToPDF } from './utils/exportUtils';
 import { REPORT_TYPES } from './constants/reportTypes';
 
 const ReportList = () => {
@@ -35,6 +35,10 @@ const ReportList = () => {
     exportToExcel(reportData, reportType, REPORT_TYPES);
   };
 
+  const handleExportPDF = () => {
+    exportToPDF(reportData, reportType, REPORT_TYPES);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -51,6 +55,7 @@ const ReportList = () => {
         reportTypes={REPORT_TYPES}
         onGenerateReport={handleGenerateReport}
         onExportExcel={handleExportExcel}
+        onExportPDF={handleExportPDF}
         loading={loading}
         setReportData={setReportData}
       />

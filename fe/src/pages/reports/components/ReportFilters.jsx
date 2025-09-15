@@ -11,7 +11,8 @@ const ReportFilters = ({
   setDateRange, 
   reportTypes, 
   onGenerateReport, 
-  onExportExcel, 
+  onExportExcel,
+  onExportPDF, 
   loading,
   setReportData 
 }) => {
@@ -51,7 +52,7 @@ const ReportFilters = ({
             <Button icon={<FileExcelOutlined />} onClick={onExportExcel}>
               Xuất Excel
             </Button>
-            <Button icon={<FilePdfOutlined />} disabled>
+            <Button icon={<FilePdfOutlined />} onClick={onExportPDF}>
               Xuất PDF
             </Button>
           </Space>
