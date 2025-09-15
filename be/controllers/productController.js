@@ -30,7 +30,20 @@ const createProduct = async (req, res) => {
 // UC01 - Cập nhật sản phẩm
 const updateProduct = async (req, res) => {
   try {
-    const [updated] = await Product.update(req.body, {
+    const { sku, name, unit, costPrice, salePrice, expiryDate, location, isActive } = req.body;
+    
+    const productData = {
+      SKU: sku,
+      Name: name,
+      Unit: unit,
+      CostPrice: costPrice,
+      SalePrice: salePrice,
+      ExpiryDate: expiryDate,
+      Location: location,
+      IsActive: isActive !== undefined ? isActive : true
+    };
+    
+    const [updated] = await Product.update(productData, {
       where: { ProductID: req.params.id }
     });
     if (!updated) {
@@ -46,15 +59,34 @@ const updateProduct = async (req, res) => {
 // UC01 - Xóa sản phẩm
 const deleteProduct = async (req, res) => {
   try {
-    const deleted = await Product.destroy({
-      where: { ProductID: req.params.id }
-    });
+    const product = await Product.findByPk(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+    }
+
+    // Thay vì xóa, vô hiệu hóa sản phẩm
+    const updated = await Product.update(
+      { IsActive: false },
+      { where: { ProductID: req.params.id } }
+    );
+    
+    const deleted = updated[0];
+    
     if (!deleted) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
     }
-    res.json({ success: true, message: 'Xóa sản phẩm thành công' });
+    
+    res.json({ success: true, message: 'Vô hiệu hóa sản phẩm thành công' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Delete product error:', error);
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Không thể xóa sản phẩm đang được tham chiếu bởi dữ liệu khác' 
+      });
+    } else {
+      res.status(500).json({ success: false, message: error.message });
+    }
   }
 };
 

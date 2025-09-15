@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, Input, message, Modal, Form, InputNumber, DatePicker } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { productAPI } from '../../services/api/productAPI';
 
 const ProductList = () => {
@@ -8,6 +9,7 @@ const ProductList = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
 
   console.log('ProductList render - products:', products, 'type:', typeof products, 'isArray:', Array.isArray(products));
@@ -24,8 +26,8 @@ const ProductList = () => {
       key: 'action',
       render: (_, record) => (
         <Space>
-          <Button icon={<EditOutlined />} size="small">Sửa</Button>
-          <Button icon={<DeleteOutlined />} size="small" danger>Xóa</Button>
+          <Button icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)}>Sửa</Button>
+          <Button icon={<DeleteOutlined />} size="small" danger onClick={() => handleDelete(record)}>Xóa</Button>
         </Space>
       )
     }
@@ -59,7 +61,9 @@ const ProductList = () => {
       const response = await productAPI.getProducts(params);
       console.log('API response:', response.data);
       if (response.data.success) {
-        setProducts(Array.isArray(response.data.data) ? response.data.data : []);
+        // Chỉ hiển thị sản phẩm đang hoạt động
+        const activeProducts = response.data.data.filter(product => product.IsActive !== false);
+        setProducts(Array.isArray(activeProducts) ? activeProducts : []);
       } else {
         setProducts([]);
         message.error(response.data.message || 'Không thể tải dữ liệu sản phẩm');
@@ -89,7 +93,57 @@ const ProductList = () => {
   }, []);
 
   const handleAddProduct = () => {
+    setEditingProduct(null);
+    form.resetFields();
     setIsModalVisible(true);
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    form.setFieldsValue({
+      sku: product.SKU,
+      name: product.Name,
+      unit: product.Unit,
+      costPrice: product.CostPrice,
+      salePrice: product.SalePrice,
+      expiryDate: product.ExpiryDate ? dayjs(product.ExpiryDate) : null,
+      location: product.Location
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleDelete = (product) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${product.Name}"? Sản phẩm sẽ không hiển thị trong danh sách nhưng dữ liệu vẫn được bảo tồn.`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          console.log('Deleting product with ID:', product.ProductID);
+          const response = await productAPI.deleteProduct(product.ProductID);
+          console.log('Delete response:', response.data);
+          
+          if (response.data.success) {
+            message.success('Xóa sản phẩm thành công');
+            loadProducts();
+          } else {
+            message.error(response.data.message || 'Lỗi xóa sản phẩm');
+          }
+        } catch (error) {
+          console.error('Delete product error:', error);
+          if (error.response?.status === 401) {
+            message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
+          } else if (error.response?.status === 404) {
+            message.error('Không tìm thấy sản phẩm');
+          } else {
+            message.error(`Lỗi xóa sản phẩm: ${error.response?.data?.message || error.message}`);
+          }
+        }
+      }
+    });
   };
 
   const handleModalOk = async () => {
@@ -106,22 +160,29 @@ const ProductList = () => {
         location: values.location
       };
 
-      const response = await productAPI.createProduct(productData);
+      let response;
+      if (editingProduct) {
+        response = await productAPI.updateProduct(editingProduct.ProductID, productData);
+        message.success('Cập nhật sản phẩm thành công');
+      } else {
+        response = await productAPI.createProduct(productData);
+        message.success('Thêm sản phẩm thành công');
+      }
       
       if (response.data.success) {
-        message.success('Thêm sản phẩm thành công');
         setIsModalVisible(false);
         form.resetFields();
+        setEditingProduct(null);
         loadProducts();
       } else {
-        message.error(response.data.message || 'Lỗi thêm sản phẩm');
+        message.error(response.data.message || 'Lỗi xử lý sản phẩm');
       }
     } catch (error) {
-      console.error('Add product error:', error);
+      console.error('Product operation error:', error);
       if (error.response?.status === 401) {
         message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
       } else {
-        message.error(`Lỗi thêm sản phẩm: ${error.response?.data?.message || error.message}`);
+        message.error(`Lỗi xử lý sản phẩm: ${error.response?.data?.message || error.message}`);
       }
     }
   };
@@ -129,6 +190,7 @@ const ProductList = () => {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
+    setEditingProduct(null);
   };
 
   return (
@@ -162,16 +224,16 @@ const ProductList = () => {
       />
 
       <Modal
-        title="Thêm sản phẩm mới"
+        title={editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
         visible={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        okText="Thêm"
+        okText={editingProduct ? 'Cập nhật' : 'Thêm'}
         cancelText="Hủy"
       >
         <Form form={form} layout="vertical">
           <Form.Item name="sku" label="Mã sản phẩm" rules={[{ required: true }]}>
-            <Input placeholder="Nhập mã sản phẩm" />
+            <Input placeholder="Nhập mã sản phẩm" disabled={!!editingProduct} />
           </Form.Item>
           <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
             <Input placeholder="Nhập tên sản phẩm" />
