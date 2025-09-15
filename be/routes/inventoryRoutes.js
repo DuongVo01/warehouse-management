@@ -98,4 +98,26 @@ router.get(
   inventoryController.getInventoryStats
 );
 
+// API kiểm kê kho
+router.get(
+  '/stock-checks',
+  auth,
+  role(['Admin', 'Staff', 'Accountant']),
+  inventoryController.getStockChecks
+);
+
+router.post(
+  '/stock-checks',
+  auth,
+  role(['Admin', 'Staff']),
+  inventoryController.createStockCheck
+);
+
+router.put(
+  '/stock-checks/:id/approve',
+  auth,
+  role(['Admin']),
+  inventoryController.approveStockCheck
+);
+
 module.exports = router;

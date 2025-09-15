@@ -25,11 +25,16 @@ export const inventoryAPI = {
   
   // Inventory transactions
   getTransactions: (params) => api.get('/inventory/transactions', { params }),
+  getTransactionHistory: (params) => api.get('/inventory/transactions', { params }),
   createImport: (data) => api.post('/inventory/import', data),
   createExport: (data) => api.post('/inventory/export', data),
   
   // Stock balance
   getBalance: (params) => api.get('/inventory/balance', { params }),
+  
+  // Reports
+  getLowStockProducts: (params) => api.get('/inventory/low-stock', { params }),
+  getExpiringProducts: (params) => api.get('/inventory/expiring', { params }),
   
   // Stock check
   getStockChecks: (params) => api.get('/inventory/stock-checks', { params }),
