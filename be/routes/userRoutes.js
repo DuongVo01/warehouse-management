@@ -7,19 +7,19 @@ const { validate } = require('../middleware/validator');
 
 // Schema validation cho user
 const userSchema = {
-  username: {
+  Username: {
     isString: { errorMessage: 'Username phải là chuỗi' },
     notEmpty: { errorMessage: 'Username là bắt buộc' }
   },
-  fullName: {
+  FullName: {
     isString: { errorMessage: 'Họ tên phải là chuỗi' },
     notEmpty: { errorMessage: 'Họ tên là bắt buộc' }
   },
-  email: {
+  Email: {
     isEmail: { errorMessage: 'Email không hợp lệ' },
     notEmpty: { errorMessage: 'Email là bắt buộc' }
   },
-  role: {
+  Role: {
     isIn: { 
       options: [['Admin', 'Staff', 'Accountant']], 
       errorMessage: 'Role phải là Admin, Staff hoặc Accountant' 

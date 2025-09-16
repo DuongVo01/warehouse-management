@@ -1,12 +1,44 @@
 const { User } = require('../models');
 const { Op } = require('sequelize');
+const bcrypt = require('bcrypt');
 
 // UC07 - Tạo người dùng mới
 const createUser = async (req, res) => {
   try {
-    const user = await User.create(req.body);
+    console.log('Received request body:', req.body);
+    const { Username, Password, FullName, Role, Email, Phone, IsActive } = req.body;
+    
+    // Validation chi tiết
+    const missingFields = [];
+    if (!Username) missingFields.push('Username');
+    if (!Password) missingFields.push('Password');
+    if (!FullName) missingFields.push('FullName');
+    if (!Role) missingFields.push('Role');
+    if (!Email) missingFields.push('Email');
+    
+    if (missingFields.length > 0) {
+      console.log('Missing fields:', missingFields);
+      return res.status(400).json({ 
+        success: false, 
+        message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}` 
+      });
+    }
+    
+    // Hash password
+    const PasswordHash = await bcrypt.hash(Password, 10);
+    
+    const user = await User.create({
+      Username,
+      PasswordHash,
+      FullName,
+      Role,
+      Email,
+      Phone,
+      IsActive: true
+    });
+    
     // Không trả về password hash
-    const { PasswordHash, ...userData } = user.toJSON();
+    const { PasswordHash: _, ...userData } = user.toJSON();
     res.status(201).json({ success: true, data: userData });
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
@@ -19,7 +51,15 @@ const createUser = async (req, res) => {
 // UC07 - Cập nhật người dùng
 const updateUser = async (req, res) => {
   try {
-    const [updated] = await User.update(req.body, {
+    const updateData = { ...req.body };
+    
+    // Nếu có password mới thì hash nó
+    if (updateData.Password) {
+      updateData.PasswordHash = await bcrypt.hash(updateData.Password, 10);
+      delete updateData.Password;
+    }
+    
+    const [updated] = await User.update(updateData, {
       where: { UserID: req.params.id }
     });
     if (!updated) {
