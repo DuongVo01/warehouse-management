@@ -145,9 +145,14 @@ const InventoryExport = () => {
               <Select 
                 placeholder="Chọn sản phẩm"
                 showSearch
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
+                filterOption={(input, option) => {
+                  const product = products.find(p => p.ProductID === option.value);
+                  if (product && product.Product) {
+                    const searchText = `${product.Product.SKU} ${product.Product.Name}`.toLowerCase();
+                    return searchText.includes(input.toLowerCase());
+                  }
+                  return false;
+                }}
               >
                 {products.map(product => (
                   <Select.Option key={product.ProductID} value={product.ProductID}>
