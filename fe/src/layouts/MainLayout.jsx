@@ -25,34 +25,57 @@ const MainLayout = () => {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const userRole = currentUser?.role || currentUser?.Role;
 
-  // Menu cơ bản cho tất cả vai trò
-  const baseMenuItems = [
-    { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
-    { key: '/products', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
-    {
-      key: 'inventory',
-      icon: <InboxOutlined />,
-      label: 'Kho hàng',
-      children: [
-        { key: '/inventory/import', label: 'Nhập kho' },
-        { key: '/inventory/export', label: 'Xuất kho' },
-        { key: '/inventory/balance', label: 'Tồn kho' },
-        { key: '/inventory/check', label: 'Kiểm kê' }
-      ]
-    },
-    { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' }
-  ];
-
-  // Menu chỉ dành cho Admin
-  const adminOnlyItems = [
-    { key: '/suppliers', icon: <TeamOutlined />, label: 'Nhà cung cấp' },
-    { key: '/users', icon: <UserOutlined />, label: 'Người dùng' }
-  ];
-
   // Tạo menu theo vai trò
-  const menuItems = userRole === 'Admin' 
-    ? [...baseMenuItems, ...adminOnlyItems]
-    : baseMenuItems;
+  const getMenuByRole = () => {
+    const baseItems = [{ key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' }];
+    
+    if (userRole === 'Admin') {
+      return [
+        ...baseItems,
+        { key: '/products', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
+        {
+          key: 'inventory',
+          icon: <InboxOutlined />,
+          label: 'Kho hàng',
+          children: [
+            { key: '/inventory/import', label: 'Nhập kho' },
+            { key: '/inventory/export', label: 'Xuất kho' },
+            { key: '/inventory/balance', label: 'Tồn kho' },
+            { key: '/inventory/check', label: 'Kiểm kê' }
+          ]
+        },
+        { key: '/suppliers', icon: <TeamOutlined />, label: 'Nhà cung cấp' },
+        { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' },
+        { key: '/users', icon: <UserOutlined />, label: 'Người dùng' }
+      ];
+    }
+    
+    if (userRole === 'Accountant') {
+      return [
+        ...baseItems,
+        { key: '/inventory/balance', icon: <InboxOutlined />, label: 'Tồn kho' },
+        { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' }
+      ];
+    }
+    
+    // Staff - chỉ có các chức năng kho
+    return [
+      ...baseItems,
+      {
+        key: 'inventory',
+        icon: <InboxOutlined />,
+        label: 'Kho hàng',
+        children: [
+          { key: '/inventory/import', label: 'Nhập kho' },
+          { key: '/inventory/export', label: 'Xuất kho' },
+          { key: '/inventory/balance', label: 'Tồn kho' },
+          { key: '/inventory/check', label: 'Kiểm kê' }
+        ]
+      }
+    ];
+  };
+
+  const menuItems = getMenuByRole();
 
   const userMenu = (
     <Menu items={[

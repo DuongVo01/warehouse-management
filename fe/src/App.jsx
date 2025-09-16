@@ -36,17 +36,37 @@ function App() {
             isAuthenticated ? <MainLayout /> : <Navigate to="/login" />
           }>
             <Route index element={<Dashboard />} />
-            <Route path="products" element={<ProductList />} />
-            <Route path="inventory/import" element={<InventoryImport />} />
-            <Route path="inventory/export" element={<InventoryExport />} />
+            <Route path="products" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <ProductList />
+              </ProtectedRoute>
+            } />
+            <Route path="inventory/import" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Staff']}>
+                <InventoryImport />
+              </ProtectedRoute>
+            } />
+            <Route path="inventory/export" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Staff']}>
+                <InventoryExport />
+              </ProtectedRoute>
+            } />
             <Route path="inventory/balance" element={<StockBalance />} />
-            <Route path="inventory/check" element={<StockCheck />} />
+            <Route path="inventory/check" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Staff']}>
+                <StockCheck />
+              </ProtectedRoute>
+            } />
             <Route path="suppliers" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <SupplierList />
               </ProtectedRoute>
             } />
-            <Route path="reports" element={<ReportList />} />
+            <Route path="reports" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Accountant']}>
+                <ReportList />
+              </ProtectedRoute>
+            } />
             <Route path="users" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <UserList />
