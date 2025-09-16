@@ -10,6 +10,11 @@ const UserList = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
   const { users, loading, deleteUser, saveUser } = useUsers();
+  
+  // Lấy thông tin user hiện tại từ localStorage
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  console.log('Current user:', currentUser);
+  console.log('Users list:', users);
 
   const handleAdd = () => {
     setEditingUser(null);
@@ -78,6 +83,7 @@ const UserList = () => {
         loading={loading}
         onEdit={handleEdit}
         onDelete={deleteUser}
+        currentUser={currentUser}
       />
 
       <Modal

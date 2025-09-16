@@ -20,8 +20,13 @@ const MainLayout = () => {
   const [openKeys, setOpenKeys] = useState(['inventory']);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Lấy thông tin user hiện tại
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = currentUser?.role || currentUser?.Role;
 
-  const menuItems = [
+  // Menu cơ bản cho tất cả vai trò
+  const baseMenuItems = [
     { key: '/', icon: <DashboardOutlined />, label: 'Tổng quan' },
     { key: '/products', icon: <ShoppingOutlined />, label: 'Sản phẩm' },
     {
@@ -35,10 +40,19 @@ const MainLayout = () => {
         { key: '/inventory/check', label: 'Kiểm kê' }
       ]
     },
+    { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' }
+  ];
+
+  // Menu chỉ dành cho Admin
+  const adminOnlyItems = [
     { key: '/suppliers', icon: <TeamOutlined />, label: 'Nhà cung cấp' },
-    { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' },
     { key: '/users', icon: <UserOutlined />, label: 'Người dùng' }
   ];
+
+  // Tạo menu theo vai trò
+  const menuItems = userRole === 'Admin' 
+    ? [...baseMenuItems, ...adminOnlyItems]
+    : baseMenuItems;
 
   const userMenu = (
     <Menu items={[

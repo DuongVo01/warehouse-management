@@ -13,6 +13,7 @@ import StockCheck from './pages/inventory/StockCheck';
 import SupplierList from './pages/suppliers/SupplierList';
 import ReportList from './pages/reports/ReportList';
 import UserList from './pages/users/UserList';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
@@ -40,9 +41,17 @@ function App() {
             <Route path="inventory/export" element={<InventoryExport />} />
             <Route path="inventory/balance" element={<StockBalance />} />
             <Route path="inventory/check" element={<StockCheck />} />
-            <Route path="suppliers" element={<SupplierList />} />
+            <Route path="suppliers" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <SupplierList />
+              </ProtectedRoute>
+            } />
             <Route path="reports" element={<ReportList />} />
-            <Route path="users" element={<UserList />} />
+            <Route path="users" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <UserList />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </Router>

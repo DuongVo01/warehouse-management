@@ -3,7 +3,7 @@ import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { USER_ROLES } from '../utils/constants';
 
-const UserTable = ({ users, loading, onEdit, onDelete }) => {
+const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
   const columns = [
     {
       title: 'Tên đăng nhập',
@@ -70,32 +70,47 @@ const UserTable = ({ users, loading, onEdit, onDelete }) => {
       title: 'Thao tác',
       key: 'action',
       width: 150,
-      render: (_, record) => (
-        <Space>
-          <Button
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => onEdit(record)}
-          >
-            Sửa
-          </Button>
-          <Popconfirm
-            title="Bạn có chắc chắn muốn xóa người dùng này?"
-            onConfirm={() => onDelete(record.UserID)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
+      render: (_, record) => {
+        const currentUserId = currentUser?.id || currentUser?.UserID;
+        const isCurrentUser = record.UserID === currentUserId;
+        const isFirstAdmin = record.UserID === 1;
+        const shouldDisable = isFirstAdmin || isCurrentUser;
+        
+        console.log(`User ${record.Username} (ID: ${record.UserID}):`, {
+          isCurrentUser,
+          isFirstAdmin,
+          shouldDisable,
+          currentUserId,
+          currentUser
+        });
+        
+        return (
+          <Space>
             <Button
-              icon={<DeleteOutlined />}
+              icon={<EditOutlined />}
               size="small"
-              danger
-              disabled={record.UserID === 1}
+              onClick={() => onEdit(record)}
             >
-              Xóa
+              Sửa
             </Button>
-          </Popconfirm>
-        </Space>
-      )
+            <Popconfirm
+              title="Bạn có chắc chắn muốn xóa người dùng này?"
+              onConfirm={() => onDelete(record.UserID)}
+              okText="Xóa"
+              cancelText="Hủy"
+            >
+              <Button
+                icon={<DeleteOutlined />}
+                size="small"
+                danger
+                disabled={shouldDisable}
+              >
+                Xóa
+              </Button>
+            </Popconfirm>
+          </Space>
+        );
+      }
     }
   ];
 
