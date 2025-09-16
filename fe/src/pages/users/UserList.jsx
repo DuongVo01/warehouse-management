@@ -25,37 +25,38 @@ const UserList = () => {
   const handleEdit = (user) => {
     setEditingUser(user);
     form.setFieldsValue({
-      Username: user.Username,
-      FullName: user.FullName,
-      Email: user.Email,
-      Phone: user.Phone,
-      Role: user.Role,
-      IsActive: user.IsActive,
-      Password: ''
+      username: user.username,
+      employeeCode: user.employeeCode,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isActive: user.isActive,
+      password: ''
     });
     setModalVisible(true);
   };
 
   const handleSubmit = async (values) => {
     const userData = {
-      Username: values.Username?.trim(),
-      FullName: values.FullName?.trim(),
-      Email: values.Email?.trim(),
-      Phone: values.Phone?.trim() || null,
-      Role: values.Role,
-      IsActive: values.IsActive !== undefined ? values.IsActive : true
+      username: values.username?.trim(),
+      fullName: values.fullName?.trim(),
+      email: values.email?.trim(),
+      phone: values.phone?.trim() || null,
+      role: values.role,
+      isActive: values.isActive !== undefined ? values.isActive : true
     };
 
     if (editingUser) {
-      if (values.Password && values.Password.trim()) {
-        userData.Password = values.Password.trim();
+      if (values.password && values.password.trim()) {
+        userData.password = values.password.trim();
       }
     } else {
-      if (!values.Password || !values.Password.trim()) {
+      if (!values.password || !values.password.trim()) {
         message.error('Vui lòng nhập mật khẩu');
         return;
       }
-      userData.Password = values.Password.trim();
+      userData.password = values.password.trim();
     }
 
     const success = await saveUser(userData, editingUser);

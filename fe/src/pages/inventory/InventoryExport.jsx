@@ -18,7 +18,7 @@ const InventoryExport = () => {
     try {
       const response = await inventoryAPI.getBalance({ limit: 100 });
       if (response.data.success) {
-        const productsWithStock = response.data.data.filter(item => item.Quantity > 0);
+        const productsWithStock = response.data.data.filter(item => item.quantity > 0);
         setProducts(productsWithStock);
       }
     } catch (error) {
@@ -47,23 +47,23 @@ const InventoryExport = () => {
   ];
 
   const addItem = (values) => {
-    const product = products.find(p => p.ProductID === values.productId);
+    const product = products.find(p => p._id === values.productId);
     if (!product) {
       message.error('Vui lòng chọn sản phẩm');
       return;
     }
     
-    if (values.quantity > product.Quantity) {
+    if (values.quantity > product.quantity) {
       message.error('Số lượng xuất vượt quá tồn kho');
       return;
     }
 
     // Kiểm tra sản phẩm đã có trong danh sách chưa
-    const existingIndex = items.findIndex(item => item.productId === values.productId);
+    const existingIndex = items.findIndex(item => item.productId === product.productId._id);
     if (existingIndex >= 0) {
       const updatedItems = [...items];
       const newQuantity = updatedItems[existingIndex].quantity + values.quantity;
-      if (newQuantity > product.Quantity) {
+      if (newQuantity > product.quantity) {
         message.error('Tổng số lượng xuất vượt quá tồn kho');
         return;
       }
@@ -71,9 +71,9 @@ const InventoryExport = () => {
       setItems(updatedItems);
     } else {
       const newItem = {
-        productId: values.productId,
-        productName: `${product.Product?.SKU} - ${product.Product?.Name}`,
-        availableStock: product.Quantity,
+        productId: product.productId._id, // Sử dụng productId._id thay vì balance._id
+        productName: `${product.productId?.sku} - ${product.productId?.name}`,
+        availableStock: product.quantity,
         quantity: values.quantity
       };
       setItems([...items, newItem]);
@@ -97,13 +97,13 @@ const InventoryExport = () => {
       // Gọi API cho từng sản phẩm
       for (const item of items) {
         const exportData = {
-          productID: item.productId,
+          productId: item.productId,
           quantity: item.quantity,
           customerInfo: values.customerInfo,
           note: values.note || 'Xuất kho'
         };
         
-        await inventoryAPI.createExport(exportData);
+        await inventoryAPI.exportInventory(exportData);
       }
       
       message.success(`Xuất kho thành công ${items.length} sản phẩm`);
@@ -146,17 +146,17 @@ const InventoryExport = () => {
                 placeholder="Chọn sản phẩm"
                 showSearch
                 filterOption={(input, option) => {
-                  const product = products.find(p => p.ProductID === option.value);
-                  if (product && product.Product) {
-                    const searchText = `${product.Product.SKU} ${product.Product.Name}`.toLowerCase();
+                  const product = products.find(p => p._id === option.value);
+                  if (product && product.productId) {
+                    const searchText = `${product.productId.sku} ${product.productId.name}`.toLowerCase();
                     return searchText.includes(input.toLowerCase());
                   }
                   return false;
                 }}
               >
                 {products.map(product => (
-                  <Select.Option key={product.ProductID} value={product.ProductID}>
-                    {product.Product?.SKU} - {product.Product?.Name} (Tồn: {product.Quantity})
+                  <Select.Option key={product._id} value={product._id}>
+                    {product.productId?.sku} - {product.productId?.name} (Tồn: {product.quantity})
                   </Select.Option>
                 ))}
               </Select>

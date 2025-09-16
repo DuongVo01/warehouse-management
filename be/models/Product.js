@@ -1,50 +1,45 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const Product = sequelize.define('Product', {
-  ProductID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  SKU: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
+const productSchema = new mongoose.Schema({
+  sku: {
+    type: String,
+    required: true,
     unique: true,
+    trim: true
   },
-  Name: {
-    type: DataTypes.STRING(150),
-    allowNull: false,
+  name: {
+    type: String,
+    required: true,
+    trim: true
   },
-  Unit: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
+  unit: {
+    type: String,
+    required: true,
+    trim: true
   },
-  CostPrice: {
-    type: DataTypes.DECIMAL(18, 2),
-    allowNull: false,
+  costPrice: {
+    type: Number,
+    required: true,
+    min: 0
   },
-  SalePrice: {
-    type: DataTypes.DECIMAL(18, 2),
-    allowNull: false,
+  salePrice: {
+    type: Number,
+    required: true,
+    min: 0
   },
-  ExpiryDate: {
-    type: DataTypes.DATE,
-    allowNull: true,
+  expiryDate: {
+    type: Date
   },
-  Location: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
+  location: {
+    type: String,
+    trim: true
   },
-  IsActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 }, {
-  tableName: 'products',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = Product;
+module.exports = mongoose.model('Product', productSchema);

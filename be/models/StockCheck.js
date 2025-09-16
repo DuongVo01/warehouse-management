@@ -1,58 +1,40 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const StockCheck = sequelize.define('StockCheck', {
-  StockCheckID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const stockCheckSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
   },
-  ProductID: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'products',
-      key: 'ProductID',
-    },
+  systemQty: {
+    type: Number,
+    required: true
   },
-  SystemQty: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
+  actualQty: {
+    type: Number,
+    required: true
   },
-  ActualQty: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
+  difference: {
+    type: Number,
+    required: true
   },
-  Difference: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  CreatedBy: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'UserID',
-    },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
-  ApprovedBy: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'users',
-      key: 'UserID',
-    },
-  },
-  Status: {
-    type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
-    allowNull: false,
-    defaultValue: 'Pending',
-  },
+  status: {
+    type: String,
+    required: true,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
+  }
 }, {
-  tableName: 'stock_checks',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = StockCheck;
+module.exports = mongoose.model('StockCheck', stockCheckSchema);

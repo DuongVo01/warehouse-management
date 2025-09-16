@@ -1,33 +1,22 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const Report = sequelize.define('Report', {
-  ReportID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const reportSchema = new mongoose.Schema({
+  reportType: {
+    type: String,
+    required: true,
+    enum: ['Import', 'Export', 'Balance', 'StockCheck']
   },
-  ReportType: {
-    type: DataTypes.ENUM('Import', 'Export', 'Inventory', 'Expiry', 'LowStock'),
-    allowNull: false,
+  filePath: {
+    type: String,
+    required: true
   },
-  FilePath: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-  },
-  CreatedBy: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'UserID',
-    },
-  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 }, {
-  tableName: 'reports',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = Report;
+module.exports = mongoose.model('Report', reportSchema);

@@ -1,61 +1,43 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const InventoryTransaction = sequelize.define('InventoryTransaction', {
-  TransactionID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const inventoryTransactionSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
   },
-  ProductID: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'products',
-      key: 'ProductID',
-    },
+  transactionType: {
+    type: String,
+    required: true,
+    enum: ['Import', 'Export']
   },
-  TransactionType: {
-    type: DataTypes.ENUM('Import', 'Export', 'Adjust'),
-    allowNull: false,
+  quantity: {
+    type: Number,
+    required: true
   },
-  Quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
+  unitPrice: {
+    type: Number,
+    min: 0
   },
-  UnitPrice: {
-    type: DataTypes.DECIMAL(18, 2),
-    allowNull: true,
+  supplierId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Supplier'
   },
-  SupplierID: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'suppliers',
-      key: 'SupplierID',
-    },
+  customerInfo: {
+    type: String,
+    trim: true
   },
-  CustomerInfo: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
+  note: {
+    type: String,
+    trim: true
   },
-  Note: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-  },
-  CreatedBy: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'UserID',
-    },
-  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 }, {
-  tableName: 'inventory_transactions',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = InventoryTransaction;
+module.exports = mongoose.model('InventoryTransaction', inventoryTransactionSchema);

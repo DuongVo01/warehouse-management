@@ -38,6 +38,15 @@ const userAPI = {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
+  },
+
+  // Cập nhật profile cá nhân
+  updateProfile: (id, data) => {
+    return axios.put(`${API_BASE_URL}/users/${id}/profile`, data, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
   }
 };
 

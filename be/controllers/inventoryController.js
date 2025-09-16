@@ -1,391 +1,187 @@
-const { InventoryTransaction, InventoryBalance, Product, Supplier, User, StockCheck } = require('../models');
-const { sequelize } = require('../config/database-sqlite');
-const { Op } = require('sequelize');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const InventoryBalance = require('../models/InventoryBalance');
+const Product = require('../models/Product');
 
-// UC02 - Nhập kho
+// Nhập kho
 const importInventory = async (req, res) => {
-  const transaction = await sequelize.transaction();
   try {
-    const { productID, quantity, unitPrice, supplierID, note } = req.body;
-    const ProductID = productID;
-    const Quantity = quantity;
-    const UnitPrice = unitPrice;
-    const SupplierID = supplierID;
-    const Note = note;
+    const { productId, quantity, unitPrice, supplierId, note } = req.body;
     
-    // Kiểm tra sản phẩm tồn tại
-    const product = await Product.findByPk(ProductID);
-    if (!product) {
-      await transaction.rollback();
-      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
+    if (!productId || !quantity || quantity <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Thiếu thông tin bắt buộc' 
+      });
     }
 
-    // Kiểm tra dữ liệu bắt buộc
-    if (!Quantity || Quantity <= 0) {
-      await transaction.rollback();
-      return res.status(400).json({ success: false, message: 'Số lượng phải lớn hơn 0' });
-    }
-
-    if (!UnitPrice || UnitPrice < 0) {
-      await transaction.rollback();
-      return res.status(400).json({ success: false, message: 'Đơn giá không hợp lệ' });
-    }
-
-    // Kiểm tra user
-    if (!req.user || !req.user.UserID) {
-      await transaction.rollback();
-      return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
-    }
-
-    // Kiểm tra supplier nếu có
-    if (SupplierID) {
-      const { Supplier } = require('../models');
-      const supplier = await Supplier.findByPk(SupplierID);
-      if (!supplier) {
-        await transaction.rollback();
-        return res.status(404).json({ success: false, message: 'Nhà cung cấp không tồn tại' });
-      }
-    }
-
-    // Tạo giao dịch nhập kho
-    const inventoryTransaction = await InventoryTransaction.create({
-      ProductID,
-      TransactionType: 'Import',
-      Quantity,
-      UnitPrice,
-      SupplierID,
-      Note,
-      CreatedBy: req.user.UserID
-    }, { transaction });
-
-    // Cập nhật tồn kho
-    const [balance, created] = await InventoryBalance.findOrCreate({
-      where: { ProductID },
-      defaults: { Quantity: 0 },
-      transaction
+    // Tạo transaction
+    const transaction = new InventoryTransaction({
+      productId,
+      transactionType: 'Import',
+      quantity,
+      unitPrice,
+      supplierId,
+      note,
+      createdBy: req.user?._id
     });
 
-    await balance.update({
-      Quantity: balance.Quantity + Quantity,
-      LastUpdated: new Date()
-    }, { transaction });
-
-    await transaction.commit();
-    res.status(201).json({ success: true, data: inventoryTransaction });
-  } catch (error) {
-    await transaction.rollback();
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// UC03 - Xuất kho
-const exportInventory = async (req, res) => {
-  const transaction = await sequelize.transaction();
-  try {
-    const { productID, quantity, customerInfo, note } = req.body;
-    const ProductID = productID;
-    const Quantity = quantity;
-    const CustomerInfo = customerInfo;
-    const Note = note;
-
-    // Kiểm tra user
-    if (!req.user || !req.user.UserID) {
-      await transaction.rollback();
-      return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
-    }
-
-    // Kiểm tra sản phẩm tồn tại
-    const product = await Product.findByPk(ProductID);
-    if (!product) {
-      await transaction.rollback();
-      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
-    }
-
-    // Kiểm tra dữ liệu bắt buộc
-    if (!Quantity || Quantity <= 0) {
-      await transaction.rollback();
-      return res.status(400).json({ success: false, message: 'Số lượng phải lớn hơn 0' });
-    }
-    
-    // Kiểm tra tồn kho
-    const balance = await InventoryBalance.findOne({ where: { ProductID } });
-    if (!balance || balance.Quantity < Quantity) {
-      await transaction.rollback();
-      return res.status(400).json({ success: false, message: 'Không đủ hàng trong kho' });
-    }
-
-    // Tạo giao dịch xuất kho
-    const inventoryTransaction = await InventoryTransaction.create({
-      ProductID,
-      TransactionType: 'Export',
-      Quantity: -Quantity,
-      CustomerInfo,
-      Note,
-      CreatedBy: req.user.UserID
-    }, { transaction });
+    await transaction.save();
 
     // Cập nhật tồn kho
-    await balance.update({
-      Quantity: balance.Quantity - Quantity,
-      LastUpdated: new Date()
-    }, { transaction });
+    await updateInventoryBalance(productId, quantity);
 
-    await transaction.commit();
-    res.status(201).json({ success: true, data: inventoryTransaction });
+    res.status(201).json({ success: true, data: transaction });
   } catch (error) {
-    await transaction.rollback();
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// UC04 - Xem tồn kho
+// Xuất kho
+const exportInventory = async (req, res) => {
+  try {
+    const { productId, quantity, customerInfo, note } = req.body;
+    
+    console.log('Export request:', { productId, quantity, customerInfo, note });
+    
+    if (!productId || !quantity || quantity <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Thiếu thông tin bắt buộc' 
+      });
+    }
+
+    // Kiểm tra tồn kho
+    const balance = await InventoryBalance.findOne({ productId });
+    console.log('Found balance:', balance);
+    
+    if (!balance || balance.quantity < quantity) {
+      console.log('Stock check failed:', { 
+        balanceExists: !!balance, 
+        currentStock: balance?.quantity, 
+        requestedQuantity: quantity 
+      });
+      return res.status(400).json({ 
+        success: false, 
+        message: `Không đủ hàng trong kho. Hiện tại: ${balance?.quantity || 0}, Yêu cầu: ${quantity}` 
+      });
+    }
+
+    // Tạo transaction
+    const transaction = new InventoryTransaction({
+      productId,
+      transactionType: 'Export',
+      quantity: -quantity,
+      customerInfo,
+      note,
+      createdBy: req.user?._id
+    });
+
+    await transaction.save();
+
+    // Cập nhật tồn kho
+    await updateInventoryBalance(productId, -quantity);
+
+    res.status(201).json({ success: true, data: transaction });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lấy tồn kho
 const getInventoryBalance = async (req, res) => {
   try {
-    const { ProductID, search, page = 1, limit = 10 } = req.query;
-    console.log('Backend search params:', { ProductID, search, page, limit });
-    const where = {};
-    const productWhere = {};
+    const balances = await InventoryBalance.find()
+      .populate('productId', 'sku name unit costPrice salePrice expiryDate location isActive')
+      .sort({ lastUpdated: -1 });
     
-    if (ProductID) where.ProductID = ProductID;
-    
-    // Tìm kiếm theo tên sản phẩm, SKU hoặc vị trí
-    if (search && search.trim()) {
-      const searchTerm = search.trim();
-      productWhere[Op.or] = [
-        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.Name')), 'LIKE', `%${searchTerm.toLowerCase()}%`),
-        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.SKU')), 'LIKE', `%${searchTerm.toLowerCase()}%`),
-        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.Location')), 'LIKE', `%${searchTerm.toLowerCase()}%`)
-      ];
-      console.log('Product where condition:', JSON.stringify(productWhere, null, 2));
-    }
-
-    const includeOptions = {
-      model: Product,
-      attributes: ['SKU', 'Name', 'Unit', 'Location', 'ExpiryDate']
-    };
-    
-    if (Object.keys(productWhere).length > 0) {
-      includeOptions.where = productWhere;
-      includeOptions.required = true; // INNER JOIN để chỉ lấy sản phẩm khớp điều kiện
-    }
-
-    const balances = await InventoryBalance.findAndCountAll({
-      where,
-      include: [includeOptions],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['LastUpdated', 'DESC']]
-    });
-
-    res.json({
-      success: true,
-      data: balances.rows,
-      pagination: {
-        total: balances.count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(balances.count / parseInt(limit))
-      }
-    });
+    res.json({ success: true, data: balances });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Lịch sử giao dịch
-const getTransactionHistory = async (req, res) => {
+// Helper function cập nhật tồn kho
+const updateInventoryBalance = async (productId, quantityChange) => {
+  const balance = await InventoryBalance.findOne({ productId });
+  
+  if (balance) {
+    balance.quantity += quantityChange;
+    balance.lastUpdated = new Date();
+    await balance.save();
+  } else {
+    await InventoryBalance.create({
+      productId,
+      quantity: Math.max(0, quantityChange),
+      lastUpdated: new Date()
+    });
+  }
+};
+
+// Lấy thống kê dashboard
+const getStats = async (req, res) => {
   try {
-    const { ProductID, TransactionType, startDate, endDate, page = 1, limit = 10 } = req.query;
-    const where = {};
+    const balances = await InventoryBalance.find()
+      .populate('productId', 'sku name unit costPrice salePrice expiryDate location isActive');
     
-    if (ProductID) where.ProductID = ProductID;
-    if (TransactionType) where.TransactionType = TransactionType;
+    // Tính toán thống kê
+    const totalProducts = balances.length;
+    const totalValue = balances.reduce((sum, item) => {
+      const costPrice = item.productId?.costPrice || 0;
+      return sum + (item.quantity * costPrice);
+    }, 0);
+    
+    const lowStockCount = balances.filter(item => item.quantity <= 10).length;
+    
+    const expiringCount = balances.filter(item => {
+      const expiryDate = item.productId?.expiryDate;
+      return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+    }).length;
+    
+    const stats = {
+      totalProducts,
+      totalValue,
+      lowStockCount,
+      expiringCount
+    };
+    
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lấy danh sách giao dịch
+const getTransactions = async (req, res) => {
+  try {
+    const { startDate, endDate, transactionType, limit = 100 } = req.query;
+    
+    let filter = {};
     
     // Lọc theo ngày
     if (startDate && endDate) {
-      where.CreatedAt = {
-        [Op.between]: [new Date(startDate), new Date(endDate + ' 23:59:59')]
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Đến cuối ngày
+      
+      filter.createdAt = {
+        $gte: start,
+        $lte: end
       };
     }
-
-    const transactions = await InventoryTransaction.findAndCountAll({
-      where,
-      include: [
-        { model: Product, attributes: ['SKU', 'Name'] },
-        { model: Supplier, attributes: ['Name'] },
-        { model: User, attributes: ['FullName'] }
-      ],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['CreatedAt', 'DESC']]
-    });
-
-    res.json({
-      success: true,
-      data: transactions.rows,
-      pagination: {
-        total: transactions.count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(transactions.count / parseInt(limit))
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Sản phẩm sắp hết hạn
-const getExpiringProducts = async (req, res) => {
-  try {
-    const { days = 30 } = req.query;
-    const expiryThreshold = new Date();
-    expiryThreshold.setDate(expiryThreshold.getDate() + parseInt(days));
-
-    const expiringProducts = await InventoryBalance.findAll({
-      include: [{
-        model: Product,
-        where: {
-          ExpiryDate: {
-            [Op.lte]: expiryThreshold,
-            [Op.gte]: new Date()
-          },
-          IsActive: true
-        },
-        attributes: ['SKU', 'Name', 'Unit', 'ExpiryDate', 'Location']
-      }],
-      where: {
-        Quantity: { [Op.gt]: 0 }
-      },
-      order: [[Product, 'ExpiryDate', 'ASC']]
-    });
-
-    res.json({
-      success: true,
-      data: expiringProducts
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Sản phẩm sắp hết hàng
-const getLowStockProducts = async (req, res) => {
-  try {
-    const { threshold = 10 } = req.query;
-
-    const lowStockProducts = await InventoryBalance.findAll({
-      include: [{
-        model: Product,
-        where: { IsActive: true },
-        attributes: ['SKU', 'Name', 'Unit', 'Location']
-      }],
-      where: {
-        Quantity: { [Op.lte]: parseInt(threshold) }
-      },
-      order: [['Quantity', 'ASC']]
-    });
-
-    res.json({
-      success: true,
-      data: lowStockProducts
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Thống kê tổng quan kho
-const getInventoryStats = async (req, res) => {
-  try {
-    const totalProducts = await Product.count({ where: { IsActive: true } });
-    const totalQuantity = await InventoryBalance.sum('Quantity');
-    const lowStockCount = await InventoryBalance.count({
-      where: { Quantity: { [Op.lte]: 10 } },
-      include: [{ model: Product, where: { IsActive: true } }]
-    });
     
-    const expiryThreshold = new Date();
-    expiryThreshold.setDate(expiryThreshold.getDate() + 30);
-    const expiringCount = await InventoryBalance.count({
-      where: { Quantity: { [Op.gt]: 0 } },
-      include: [{
-        model: Product,
-        where: {
-          ExpiryDate: { [Op.lte]: expiryThreshold, [Op.gte]: new Date() },
-          IsActive: true
-        }
-      }]
-    });
-
-    // Tính tổng giá trị kho
-    const inventoryWithProducts = await InventoryBalance.findAll({
-      include: [{
-        model: Product,
-        where: { IsActive: true },
-        attributes: ['CostPrice']
-      }],
-      where: { Quantity: { [Op.gt]: 0 } }
-    });
+    // Lọc theo loại giao dịch
+    if (transactionType) {
+      filter.transactionType = transactionType;
+    }
     
-    const totalValue = inventoryWithProducts.reduce((sum, item) => {
-      const costPrice = item.Product?.CostPrice || 0;
-      const quantity = item.Quantity || 0;
-      return sum + (costPrice * quantity);
-    }, 0);
-
-    res.json({
-      success: true,
-      data: {
-        totalProducts,
-        totalQuantity: totalQuantity || 0,
-        totalValue,
-        lowStockCount,
-        expiringCount
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Lấy danh sách kiểm kê
-const getStockChecks = async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: [],
-      pagination: {
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Tạo phiếu kiểm kê
-const createStockCheck = async (req, res) => {
-  try {
-    res.status(201).json({ 
-      success: true, 
-      message: 'Tạo phiếu kiểm kê thành công' 
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Duyệt phiếu kiểm kê
-const approveStockCheck = async (req, res) => {
-  try {
-    res.json({ 
-      success: true, 
-      message: 'Duyệt phiếu kiểm kê thành công' 
-    });
+    const transactions = await InventoryTransaction.find(filter)
+      .populate('productId', 'sku name unit costPrice salePrice')
+      .populate('supplierId', 'name')
+      .populate('createdBy', 'fullName employeeCode')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+    
+    res.json({ success: true, data: transactions });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -395,11 +191,6 @@ module.exports = {
   importInventory,
   exportInventory,
   getInventoryBalance,
-  getTransactionHistory,
-  getExpiringProducts,
-  getLowStockProducts,
-  getInventoryStats,
-  getStockChecks,
-  createStockCheck,
-  approveStockCheck,
+  getStats,
+  getTransactions
 };

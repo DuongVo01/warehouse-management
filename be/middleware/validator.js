@@ -71,9 +71,9 @@ const schemas = {
 
   // Inventory transaction validation
   inventoryTransaction: {
-    productID: {
-      isInt: { errorMessage: 'ProductID phải là số nguyên' },
-      notEmpty: { errorMessage: 'ProductID là bắt buộc' }
+    productId: {
+      isMongoId: { errorMessage: 'ProductId phải là ObjectId hợp lệ' },
+      notEmpty: { errorMessage: 'ProductId là bắt buộc' }
     },
     quantity: {
       isInt: { options: { min: 1 }, errorMessage: 'Số lượng phải là số nguyên dương' },
@@ -83,9 +83,9 @@ const schemas = {
 
   // Stock check validation
   stockCheck: {
-    productID: {
-      isInt: { errorMessage: 'ProductID phải là số nguyên' },
-      notEmpty: { errorMessage: 'ProductID là bắt buộc' }
+    productId: {
+      isMongoId: { errorMessage: 'ProductId phải là ObjectId hợp lệ' },
+      notEmpty: { errorMessage: 'ProductId là bắt buộc' }
     },
     actualQty: {
       isInt: { options: { min: 0 }, errorMessage: 'Số lượng thực tế phải là số nguyên không âm' },

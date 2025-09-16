@@ -1,157 +1,91 @@
-const { Product } = require('../models');
-const { Op } = require('sequelize');
+const Product = require('../models/Product');
 
-// UC01 - Tạo sản phẩm mới
+// Tạo product mới
 const createProduct = async (req, res) => {
   try {
-    const { sku, name, unit, costPrice, salePrice, expiryDate, location, isActive } = req.body;
+    const { sku, name, unit, costPrice, salePrice, expiryDate, location } = req.body;
     
-    const productData = {
-      SKU: sku,
-      Name: name,
-      Unit: unit,
-      CostPrice: costPrice,
-      SalePrice: salePrice,
-      ExpiryDate: expiryDate,
-      Location: location,
-      IsActive: isActive !== undefined ? isActive : true
-    };
-    
-    const product = await Product.create(productData);
+    if (!sku || !name || !unit || costPrice === undefined || salePrice === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Thiếu thông tin bắt buộc' 
+      });
+    }
+
+    const product = new Product({
+      sku,
+      name,
+      unit,
+      costPrice,
+      salePrice,
+      expiryDate,
+      location
+    });
+
+    await product.save();
     res.status(201).json({ success: true, data: product });
   } catch (error) {
-    if (error.name === 'SequelizeUniqueConstraintError') {
+    if (error.code === 11000) {
       return res.status(400).json({ success: false, message: 'SKU đã tồn tại' });
     }
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// UC01 - Cập nhật sản phẩm
+// Lấy tất cả products
+const getAllProducts = async (req, res) => {
+  try {
+    const { search, limit = 100 } = req.query;
+    
+    let filter = { isActive: { $ne: false } };
+    
+    // Thêm tìm kiếm nếu có
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { sku: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const products = await Product.find(filter)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+      
+    res.json({ success: true, data: products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Cập nhật product
 const updateProduct = async (req, res) => {
   try {
-    const { sku, name, unit, costPrice, salePrice, expiryDate, location, isActive } = req.body;
-    
-    const productData = {
-      SKU: sku,
-      Name: name,
-      Unit: unit,
-      CostPrice: costPrice,
-      SalePrice: salePrice,
-      ExpiryDate: expiryDate,
-      Location: location,
-      IsActive: isActive !== undefined ? isActive : true
-    };
-    
-    const [updated] = await Product.update(productData, {
-      where: { ProductID: req.params.id }
-    });
-    if (!updated) {
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
     }
-    const product = await Product.findByPk(req.params.id);
     res.json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// UC01 - Xóa sản phẩm
+// Xóa product
 const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
     }
-
-    // Thay vì xóa, vô hiệu hóa sản phẩm
-    const updated = await Product.update(
-      { IsActive: false },
-      { where: { ProductID: req.params.id } }
-    );
-    
-    const deleted = updated[0];
-    
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
-    }
-    
-    res.json({ success: true, message: 'Vô hiệu hóa sản phẩm thành công' });
+    res.json({ success: true, message: 'Xóa sản phẩm thành công' });
   } catch (error) {
-    console.error('Delete product error:', error);
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      res.status(400).json({ 
-        success: false, 
-        message: 'Không thể xóa sản phẩm đang được tham chiếu bởi dữ liệu khác' 
-      });
-    } else {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-};
-
-// UC01 - Lấy chi tiết sản phẩm
-const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
-    }
-    res.json({ success: true, data: product });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// UC01 - Tra cứu sản phẩm
-const searchProducts = async (req, res) => {
-  try {
-    const { sku, name, unit, search, page = 1, limit = 10 } = req.query;
-    console.log('Search params:', { sku, name, unit, search });
-    const where = {};
-    
-    if (search) {
-      where[Op.or] = [
-        { SKU: { [Op.like]: `%${search}%` } },
-        { Name: { [Op.like]: `%${search}%` } }
-      ];
-    } else {
-      if (sku) where.SKU = { [Op.like]: `%${sku}%` };
-      if (name) where.Name = { [Op.like]: `%${name}%` };
-      if (unit) where.Unit = { [Op.like]: `%${unit}%` };
-    }
-
-    console.log('Where clause:', where);
-
-    const products = await Product.findAndCountAll({
-      where,
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['CreatedAt', 'DESC']]
-    });
-
-    console.log('Found products:', products.count);
-
-    res.json({
-      success: true,
-      data: products.rows,
-      pagination: {
-        total: products.count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(products.count / parseInt(limit))
-      }
-    });
-  } catch (error) {
-    console.error('Search error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 module.exports = {
   createProduct,
+  getAllProducts,
   updateProduct,
-  deleteProduct,
-  getProductById,
-  searchProducts,
+  deleteProduct
 };

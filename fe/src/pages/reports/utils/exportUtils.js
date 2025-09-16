@@ -21,46 +21,68 @@ export const exportToExcel = (reportData, reportType, reportTypes) => {
     case 'inventory':
       exportData = reportData.map((item, index) => ({
         'STT': index + 1,
-        'Mã SP': item.Product?.SKU || '',
-        'Tên sản phẩm': item.Product?.Name || '',
-        'Đơn vị': item.Product?.Unit || '',
-        'Tồn kho': item.Quantity || 0,
-        'Vị trí': item.Product?.Location || '',
+        'Mã SP': item.productId?.sku || '',
+        'Tên sản phẩm': item.productId?.name || '',
+        'Đơn vị': item.productId?.unit || '',
+        'Tồn kho': item.quantity || 0,
+        'Vị trí': item.productId?.location || '',
         'Ngày báo cáo': new Date().toLocaleDateString('vi-VN')
       }));
       break;
     case 'transactions':
       exportData = reportData.map((item, index) => {
-        const id = item.TransactionID || item.transaction_i_d;
-        const date = item.CreatedAt || item.created_at;
-        const quantity = item.Quantity || item.quantity || 0;
-        const type = quantity > 0 ? 'NK' : 'XK';
+        const id = item._id;
+        const date = item.createdAt;
+        const type = item.transactionType === 'Import' ? 'NK' : 'XK';
         
         let transactionCode = '-';
         if (id && date) {
           const dateStr = new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
-          transactionCode = `${type}${dateStr}${String(id).padStart(4, '0')}`;
+          transactionCode = `${type}${dateStr}${String(id).slice(-4)}`;
         } else if (id) {
-          transactionCode = `${type}${String(id).padStart(6, '0')}`;
+          transactionCode = `${type}${String(id).slice(-6)}`;
         }
+        
+        const price = item.transactionType === 'Import' 
+          ? item.unitPrice 
+          : item.productId?.salePrice;
         
         return {
           'STT': index + 1,
           'Mã GD': transactionCode,
-          'Loại': quantity > 0 ? 'Nhập' : 'Xuất',
-          'Sản phẩm': item.Product?.Name || item.Product?.name || '',
-          'Số lượng': Math.abs(quantity),
-          'Đơn giá': item.UnitPrice || item.unit_price || 0,
-          'Ngày': date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+          'Loại': item.transactionType === 'Import' ? 'Nhập' : 'Xuất',
+          'Sản phẩm': `${item.productId?.sku} - ${item.productId?.name}` || '',
+          'Số lượng': Math.abs(item.quantity || 0),
+          'Đơn giá': price || 0,
+          'Ngày': date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+          'Ghi chú': item.note || item.customerInfo || ''
         };
       });
+      break;
+    case 'lowstock':
+      exportData = reportData.map((item, index) => ({
+        'STT': index + 1,
+        'Mã SP': item.productId?.sku || '',
+        'Tên sản phẩm': item.productId?.name || '',
+        'Tồn kho': item.quantity || 0,
+        'Vị trí': item.productId?.location || ''
+      }));
+      break;
+    case 'expiring':
+      exportData = reportData.map((item, index) => ({
+        'STT': index + 1,
+        'Mã SP': item.productId?.sku || '',
+        'Tên sản phẩm': item.productId?.name || '',
+        'Tồn kho': item.quantity || 0,
+        'Hạn sử dụng': item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+      }));
       break;
     default:
       exportData = reportData.map((item, index) => ({
         'STT': index + 1,
-        'Mã SP': item.Product?.SKU || '',
-        'Tên sản phẩm': item.Product?.Name || '',
-        'Tồn kho': item.Quantity || 0
+        'Mã SP': item.productId?.sku || '',
+        'Tên sản phẩm': item.productId?.name || '',
+        'Tồn kho': item.quantity || 0
       }));
   }
 
@@ -133,46 +155,70 @@ export const exportToPDF = (reportData, reportType, reportTypes) => {
       columns = ['STT', 'Ma SP', 'Ten san pham', 'Don vi', 'Ton kho', 'Vi tri'];
       rows = reportData.map((item, index) => [
         index + 1,
-        item.Product?.SKU || '',
-        convertVietnameseToEnglish(item.Product?.Name) || '',
-        convertVietnameseToEnglish(item.Product?.Unit) || '',
-        item.Quantity || 0,
-        convertVietnameseToEnglish(item.Product?.Location) || ''
+        item.productId?.sku || '',
+        convertVietnameseToEnglish(item.productId?.name) || '',
+        convertVietnameseToEnglish(item.productId?.unit) || '',
+        item.quantity || 0,
+        convertVietnameseToEnglish(item.productId?.location) || ''
       ]);
       break;
     case 'transactions':
-      columns = ['STT', 'Ma GD', 'Loai', 'San pham', 'So luong', 'Don gia'];
+      columns = ['STT', 'Ma GD', 'Loai', 'San pham', 'So luong', 'Don gia', 'Ghi chu'];
       rows = reportData.map((item, index) => {
-        const id = item.TransactionID || item.transaction_i_d;
-        const date = item.CreatedAt || item.created_at;
-        const quantity = item.Quantity || item.quantity || 0;
-        const type = quantity > 0 ? 'NK' : 'XK';
+        const id = item._id;
+        const date = item.createdAt;
+        const type = item.transactionType === 'Import' ? 'NK' : 'XK';
         
         let transactionCode = '-';
         if (id && date) {
           const dateStr = new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
-          transactionCode = `${type}${dateStr}${String(id).padStart(4, '0')}`;
+          transactionCode = `${type}${dateStr}${String(id).slice(-4)}`;
         } else if (id) {
-          transactionCode = `${type}${String(id).padStart(6, '0')}`;
+          transactionCode = `${type}${String(id).slice(-6)}`;
         }
+        
+        const price = item.transactionType === 'Import' 
+          ? item.unitPrice 
+          : item.productId?.salePrice;
         
         return [
           index + 1,
           transactionCode,
-          quantity > 0 ? 'Nhap' : 'Xuat',
-          convertVietnameseToEnglish(item.Product?.Name || item.Product?.name) || '',
-          Math.abs(quantity),
-          (item.UnitPrice || item.unit_price || 0).toLocaleString() + ' dong'
+          item.transactionType === 'Import' ? 'Nhap' : 'Xuat',
+          convertVietnameseToEnglish(`${item.productId?.sku} - ${item.productId?.name}`) || '',
+          Math.abs(item.quantity || 0),
+          (price || 0).toLocaleString() + ' dong',
+          convertVietnameseToEnglish(item.note || item.customerInfo) || ''
         ];
       });
+      break;
+    case 'lowstock':
+      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Vi tri'];
+      rows = reportData.map((item, index) => [
+        index + 1,
+        item.productId?.sku || '',
+        convertVietnameseToEnglish(item.productId?.name) || '',
+        item.quantity || 0,
+        convertVietnameseToEnglish(item.productId?.location) || ''
+      ]);
+      break;
+    case 'expiring':
+      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Han su dung'];
+      rows = reportData.map((item, index) => [
+        index + 1,
+        item.productId?.sku || '',
+        convertVietnameseToEnglish(item.productId?.name) || '',
+        item.quantity || 0,
+        item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+      ]);
       break;
     default:
       columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho'];
       rows = reportData.map((item, index) => [
         index + 1,
-        item.Product?.SKU || '',
-        convertVietnameseToEnglish(item.Product?.Name) || '',
-        item.Quantity || 0
+        item.productId?.sku || '',
+        convertVietnameseToEnglish(item.productId?.name) || '',
+        item.quantity || 0
       ]);
   }
   

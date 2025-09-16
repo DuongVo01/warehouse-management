@@ -7,8 +7,8 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
   const columns = [
     {
       title: 'Tên đăng nhập',
-      dataIndex: 'Username',
-      key: 'Username',
+      dataIndex: 'username',
+      key: 'username',
       render: (username) => (
         <span>
           <UserOutlined style={{ marginRight: 8 }} />
@@ -17,14 +17,19 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
       )
     },
     {
+      title: 'Mã nhân viên',
+      dataIndex: 'employeeCode',
+      key: 'employeeCode'
+    },
+    {
       title: 'Họ tên',
-      dataIndex: 'FullName',
-      key: 'FullName'
+      dataIndex: 'fullName',
+      key: 'fullName'
     },
     {
       title: 'Vai trò',
-      dataIndex: 'Role',
-      key: 'Role',
+      dataIndex: 'role',
+      key: 'role',
       render: (role) => {
         const roleInfo = USER_ROLES.find(r => r.value === role);
         return (
@@ -36,8 +41,8 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
     },
     {
       title: 'Email',
-      dataIndex: 'Email',
-      key: 'Email',
+      dataIndex: 'email',
+      key: 'email',
       render: (email) => (
         <span>
           <MailOutlined style={{ marginRight: 8 }} />
@@ -47,8 +52,8 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'Phone',
-      key: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
       render: (phone) => phone ? (
         <span>
           <PhoneOutlined style={{ marginRight: 8 }} />
@@ -58,8 +63,8 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'IsActive',
-      key: 'IsActive',
+      dataIndex: 'isActive',
+      key: 'isActive',
       render: (isActive) => (
         <Tag color={isActive ? 'green' : 'red'}>
           {isActive ? 'Hoạt động' : 'Tạm khóa'}
@@ -71,12 +76,12 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
       key: 'action',
       width: 150,
       render: (_, record) => {
-        const currentUserId = currentUser?.id || currentUser?.UserID;
-        const isCurrentUser = record.UserID === currentUserId;
-        const isFirstAdmin = record.UserID === 1;
+        const currentUserId = currentUser?.id;
+        const isCurrentUser = record._id === currentUserId;
+        const isFirstAdmin = false; // MongoDB không có auto-increment ID
         const shouldDisable = isFirstAdmin || isCurrentUser;
         
-        console.log(`User ${record.Username} (ID: ${record.UserID}):`, {
+        console.log(`User ${record.username} (ID: ${record._id}):`, {
           isCurrentUser,
           isFirstAdmin,
           shouldDisable,
@@ -95,7 +100,7 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
             </Button>
             <Popconfirm
               title="Bạn có chắc chắn muốn xóa người dùng này?"
-              onConfirm={() => onDelete(record.UserID)}
+              onConfirm={() => onDelete(record._id)}
               okText="Xóa"
               cancelText="Hủy"
             >
@@ -119,7 +124,7 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
       columns={columns}
       dataSource={users}
       loading={loading}
-      rowKey="UserID"
+      rowKey="_id"
       pagination={{ pageSize: 10 }}
     />
   );

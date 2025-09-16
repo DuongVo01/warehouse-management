@@ -9,7 +9,7 @@ class EmailService {
         subject: 'Cảnh báo: Hàng tồn kho thấp',
         body: `
           Các sản phẩm sau đây có tồn kho thấp:
-          ${products.map(p => `- ${p.Product?.Name}: ${p.Quantity} ${p.Product?.Unit}`).join('\n')}
+          ${products.map(p => `- ${p.productId?.name}: ${p.quantity} ${p.productId?.unit}`).join('\n')}
           
           Vui lòng kiểm tra và bổ sung hàng hóa.
         `,
@@ -31,7 +31,7 @@ class EmailService {
         subject: 'Cảnh báo: Hàng sắp hết hạn sử dụng',
         body: `
           Các sản phẩm sau đây sắp hết hạn sử dụng:
-          ${products.map(p => `- ${p.Name}: HSD ${p.ExpiryDate?.toLocaleDateString('vi-VN')}`).join('\n')}
+          ${products.map(p => `- ${p.name}: HSD ${p.expiryDate?.toLocaleDateString('vi-VN')}`).join('\n')}
           
           Vui lòng xử lý trước khi hết hạn.
         `,
@@ -77,11 +77,11 @@ class EmailService {
       const emailContent = {
         subject: 'Thông báo: Phiếu kiểm kê cần duyệt',
         body: `
-          Phiếu kiểm kê #${stockCheck.StockCheckID} cần được duyệt:
-          - Sản phẩm: ${stockCheck.Product?.Name}
-          - Số lượng hệ thống: ${stockCheck.SystemQty}
-          - Số lượng thực tế: ${stockCheck.ActualQty}
-          - Chênh lệch: ${stockCheck.Difference}
+          Phiếu kiểm kê #${stockCheck._id} cần được duyệt:
+          - Sản phẩm: ${stockCheck.productId?.name}
+          - Số lượng hệ thống: ${stockCheck.systemQty}
+          - Số lượng thực tế: ${stockCheck.actualQty}
+          - Chênh lệch: ${stockCheck.difference}
           
           Vui lòng vào hệ thống để xử lý.
         `,
@@ -102,11 +102,11 @@ class EmailService {
       const emailContent = {
         subject: 'Cảnh báo: Giao dịch có giá trị lớn',
         body: `
-          Giao dịch #${transaction.TransactionID} có giá trị lớn:
-          - Loại: ${transaction.TransactionType}
-          - Sản phẩm: ${transaction.Product?.Name}
-          - Số lượng: ${Math.abs(transaction.Quantity)}
-          - Giá trị: ${(Math.abs(transaction.Quantity) * (transaction.UnitPrice || 0)).toLocaleString('vi-VN')} VNĐ
+          Giao dịch #${transaction._id} có giá trị lớn:
+          - Loại: ${transaction.transactionType}
+          - Sản phẩm: ${transaction.productId?.name}
+          - Số lượng: ${Math.abs(transaction.quantity)}
+          - Giá trị: ${(Math.abs(transaction.quantity) * (transaction.unitPrice || 0)).toLocaleString('vi-VN')} VNĐ
           
           Vui lòng kiểm tra và xác nhận.
         `,

@@ -1,30 +1,33 @@
-const { InventoryTransaction, InventoryBalance, Product } = require('../models');
-const { sequelize } = require('../config/database-sqlite');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const InventoryBalance = require('../models/InventoryBalance');
+const Product = require('../models/Product');
+const mongoose = require('mongoose');
 
 class InventoryService {
   // Cập nhật tồn kho sau giao dịch
-  static async updateBalance(productId, quantity, transaction = null) {
-    const [balance, created] = await InventoryBalance.findOrCreate({
-      where: { ProductID: productId },
-      defaults: { Quantity: 0 },
-      transaction
-    });
+  static async updateBalance(productId, quantity) {
+    const balance = await InventoryBalance.findOne({ productId });
 
-    await balance.update({
-      Quantity: balance.Quantity + quantity,
-      LastUpdated: new Date()
-    }, { transaction });
+    if (balance) {
+      balance.quantity += quantity;
+      balance.lastUpdated = new Date();
+      await balance.save();
+    } else {
+      await InventoryBalance.create({
+        productId,
+        quantity: Math.max(0, quantity),
+        lastUpdated: new Date()
+      });
+    }
 
     return balance;
   }
 
   // Kiểm tra tồn kho có đủ không
   static async checkStock(productId, requiredQuantity) {
-    const balance = await InventoryBalance.findOne({
-      where: { ProductID: productId }
-    });
-
-    const currentStock = balance ? balance.Quantity : 0;
+    const balance = await InventoryBalance.findOne({ productId });
+    const currentStock = balance ? balance.quantity : 0;
+    
     return {
       available: currentStock,
       sufficient: currentStock >= requiredQuantity,
@@ -34,63 +37,60 @@ class InventoryService {
 
   // Lấy danh sách sản phẩm tồn thấp
   static async getLowStockProducts(threshold = 10) {
-    return await InventoryBalance.findAll({
-      where: {
-        Quantity: { [sequelize.Op.lte]: threshold }
-      },
-      include: [{
-        model: Product,
-        attributes: ['SKU', 'Name', 'Unit']
-      }],
-      order: [['Quantity', 'ASC']]
-    });
+    return await InventoryBalance.find({
+      quantity: { $lte: threshold }
+    })
+    .populate('productId', 'sku name unit')
+    .sort({ quantity: 1 });
   }
 
   // Tính tổng giá trị tồn kho
   static async calculateInventoryValue() {
-    const balances = await InventoryBalance.findAll({
-      include: [{
-        model: Product,
-        attributes: ['CostPrice']
-      }]
-    });
+    const balances = await InventoryBalance.find()
+      .populate('productId', 'costPrice');
 
     return balances.reduce((total, balance) => {
-      const costPrice = balance.Product?.CostPrice || 0;
-      return total + (balance.Quantity * costPrice);
+      const costPrice = balance.productId?.costPrice || 0;
+      return total + (balance.quantity * costPrice);
     }, 0);
   }
 
   // Xử lý nhập kho hàng loạt
   static async bulkImport(items, userId) {
-    const transaction = await sequelize.transaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
     try {
       const results = [];
 
       for (const item of items) {
-        const { ProductID, Quantity, UnitPrice, SupplierID, Note } = item;
+        const { productId, quantity, unitPrice, supplierId, note } = item;
 
         // Tạo giao dịch
-        const inventoryTransaction = await InventoryTransaction.create({
-          ProductID,
-          TransactionType: 'Import',
-          Quantity,
-          UnitPrice,
-          SupplierID,
-          Note,
-          CreatedBy: userId
-        }, { transaction });
+        const inventoryTransaction = new InventoryTransaction({
+          productId,
+          transactionType: 'Import',
+          quantity,
+          unitPrice,
+          supplierId,
+          note,
+          createdBy: userId
+        });
+
+        await inventoryTransaction.save({ session });
 
         // Cập nhật tồn kho
-        await this.updateBalance(ProductID, Quantity, transaction);
+        await this.updateBalance(productId, quantity);
         results.push(inventoryTransaction);
       }
 
-      await transaction.commit();
+      await session.commitTransaction();
       return results;
     } catch (error) {
-      await transaction.rollback();
+      await session.abortTransaction();
       throw error;
+    } finally {
+      session.endSession();
     }
   }
 }

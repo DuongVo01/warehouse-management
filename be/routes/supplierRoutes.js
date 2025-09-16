@@ -1,21 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const supplierController = require('../controllers/supplierController');
-const authMiddleware = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const role = require('../middleware/role');
 
-// Áp dụng middleware xác thực cho tất cả routes
-router.use(authMiddleware);
+// API danh sách nhà cung cấp
+router.get('/', auth, supplierController.getAllSuppliers);
 
-// GET /api/suppliers - Lấy danh sách nhà cung cấp
-router.get('/', supplierController.getSuppliers);
+// API tạo nhà cung cấp
+router.post('/', auth, role(['Admin']), supplierController.createSupplier);
 
-// POST /api/suppliers - Tạo nhà cung cấp mới
-router.post('/', supplierController.createSupplier);
+// API cập nhật nhà cung cấp
+router.put('/:id', auth, role(['Admin']), supplierController.updateSupplier);
 
-// PUT /api/suppliers/:id - Cập nhật nhà cung cấp
-router.put('/:id', supplierController.updateSupplier);
-
-// DELETE /api/suppliers/:id - Xóa nhà cung cấp
-router.delete('/:id', supplierController.deleteSupplier);
+// API xóa nhà cung cấp
+router.delete('/:id', auth, role(['Admin']), supplierController.deleteSupplier);
 
 module.exports = router;

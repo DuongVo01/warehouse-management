@@ -1,126 +1,84 @@
-const { StockCheck, InventoryBalance, Product, User } = require('../models');
-const { sequelize } = require('../config/database-sqlite');
+const StockCheck = require('../models/StockCheck');
+const InventoryBalance = require('../models/InventoryBalance');
 
-// UC05 - Tạo phiếu kiểm kê
+// Tạo kiểm kê mới
 const createStockCheck = async (req, res) => {
   try {
-    const { ProductID, ActualQty, Note } = req.body;
+    const { productId, actualQty } = req.body;
     
-    // Lấy số lượng hệ thống
-    const balance = await InventoryBalance.findOne({ where: { ProductID } });
-    const SystemQty = balance ? balance.Quantity : 0;
-    const Difference = ActualQty - SystemQty;
-
-    const stockCheck = await StockCheck.create({
-      ProductID,
-      SystemQty,
-      ActualQty,
-      Difference,
-      CreatedBy: req.user.UserID,
-      Status: 'Pending'
-    });
-
-    res.status(201).json({ success: true, data: stockCheck });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// UC05 - Duyệt phiếu kiểm kê
-const approveStockCheck = async (req, res) => {
-  const transaction = await sequelize.transaction();
-  try {
-    const { id } = req.params;
-    const { status } = req.body; // 'Approved' hoặc 'Rejected'
-    
-    const stockCheck = await StockCheck.findByPk(id);
-    if (!stockCheck) {
-      await transaction.rollback();
-      return res.status(404).json({ success: false, message: 'Không tìm thấy phiếu kiểm kê' });
-    }
-
-    if (stockCheck.Status !== 'Pending') {
-      await transaction.rollback();
-      return res.status(400).json({ success: false, message: 'Phiếu kiểm kê đã được xử lý' });
-    }
-
-    // Cập nhật trạng thái phiếu kiểm kê
-    await stockCheck.update({
-      Status: status,
-      ApprovedBy: req.user.UserID
-    }, { transaction });
-
-    // Nếu duyệt và có chênh lệch, cập nhật tồn kho
-    if (status === 'Approved' && stockCheck.Difference !== 0) {
-      const [balance] = await InventoryBalance.findOrCreate({
-        where: { ProductID: stockCheck.ProductID },
-        defaults: { Quantity: 0 },
-        transaction
+    if (!productId || actualQty === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Thiếu thông tin bắt buộc' 
       });
-
-      await balance.update({
-        Quantity: stockCheck.ActualQty,
-        LastUpdated: new Date()
-      }, { transaction });
     }
 
-    await transaction.commit();
-    res.json({ success: true, data: stockCheck });
-  } catch (error) {
-    await transaction.rollback();
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+    // Lấy số lượng hệ thống
+    const balance = await InventoryBalance.findOne({ productId });
+    const systemQty = balance ? balance.quantity : 0;
+    const difference = actualQty - systemQty;
 
-// Danh sách phiếu kiểm kê
-const getStockChecks = async (req, res) => {
-  try {
-    const { Status, ProductID, page = 1, limit = 10 } = req.query;
-    const where = {};
+    const stockCheck = new StockCheck({
+      productId,
+      systemQty,
+      actualQty,
+      difference,
+      createdBy: req.user._id
+    });
+
+    await stockCheck.save();
     
-    if (Status) where.Status = Status;
-    if (ProductID) where.ProductID = ProductID;
+    const populatedStockCheck = await StockCheck.findById(stockCheck._id)
+      .populate('productId', 'sku name unit')
+      .populate('createdBy', 'fullName employeeCode');
 
-    const stockChecks = await StockCheck.findAndCountAll({
-      where,
-      include: [
-        { model: Product, attributes: ['SKU', 'Name'] },
-        { model: User, as: 'Creator', attributes: ['FullName'] },
-        { model: User, as: 'Approver', attributes: ['FullName'] }
-      ],
-      limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
-      order: [['CreatedAt', 'DESC']]
-    });
-
-    res.json({
-      success: true,
-      data: stockChecks.rows,
-      pagination: {
-        total: stockChecks.count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(stockChecks.count / parseInt(limit))
-      }
-    });
+    res.status(201).json({ success: true, data: populatedStockCheck });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Chi tiết phiếu kiểm kê
-const getStockCheckById = async (req, res) => {
+// Lấy danh sách kiểm kê
+const getAllStockChecks = async (req, res) => {
   try {
-    const stockCheck = await StockCheck.findByPk(req.params.id, {
-      include: [
-        { model: Product, attributes: ['SKU', 'Name', 'Unit'] },
-        { model: User, as: 'Creator', attributes: ['FullName'] },
-        { model: User, as: 'Approver', attributes: ['FullName'] }
-      ]
-    });
+    const stockChecks = await StockCheck.find()
+      .populate('productId', 'sku name unit')
+      .populate('createdBy', 'fullName employeeCode')
+      .populate('approvedBy', 'fullName employeeCode')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: stockChecks });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Phê duyệt kiểm kê
+const approveStockCheck = async (req, res) => {
+  try {
+    const stockCheck = await StockCheck.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'Approved',
+        approvedBy: req.user._id
+      },
+      { new: true }
+    ).populate('productId', 'sku name unit');
 
     if (!stockCheck) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy phiếu kiểm kê' });
+    }
+
+    // Cập nhật tồn kho nếu có chênh lệch
+    if (stockCheck.difference !== 0) {
+      await InventoryBalance.findOneAndUpdate(
+        { productId: stockCheck.productId },
+        { 
+          quantity: stockCheck.actualQty,
+          lastUpdated: new Date()
+        },
+        { upsert: true }
+      );
     }
 
     res.json({ success: true, data: stockCheck });
@@ -131,7 +89,6 @@ const getStockCheckById = async (req, res) => {
 
 module.exports = {
   createStockCheck,
-  approveStockCheck,
-  getStockChecks,
-  getStockCheckById,
+  getAllStockChecks,
+  approveStockCheck
 };

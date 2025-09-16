@@ -38,24 +38,24 @@ const SupplierList = () => {
   const columns = [
     {
       title: 'Mã NCC',
-      dataIndex: 'SupplierCode',
-      key: 'SupplierCode',
+      dataIndex: 'supplierCode',
+      key: 'supplierCode',
       width: 100
     },
     {
       title: 'Tên nhà cung cấp',
-      dataIndex: 'Name',
-      key: 'Name'
+      dataIndex: 'name',
+      key: 'name'
     },
     {
       title: 'Mã số thuế',
-      dataIndex: 'TaxCode',
-      key: 'TaxCode'
+      dataIndex: 'taxCode',
+      key: 'taxCode'
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'Phone',
-      key: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
       render: (phone) => (
         <span>
           <PhoneOutlined style={{ marginRight: 8 }} />
@@ -65,8 +65,8 @@ const SupplierList = () => {
     },
     {
       title: 'Email',
-      dataIndex: 'Email',
-      key: 'Email',
+      dataIndex: 'email',
+      key: 'email',
       render: (email) => (
         <span>
           <MailOutlined style={{ marginRight: 8 }} />
@@ -76,8 +76,8 @@ const SupplierList = () => {
     },
     {
       title: 'Địa chỉ',
-      dataIndex: 'Address',
-      key: 'Address',
+      dataIndex: 'address',
+      key: 'address',
       ellipsis: true
     },
     {
@@ -95,7 +95,7 @@ const SupplierList = () => {
           </Button>
           <Popconfirm
             title="Bạn có chắc chắn muốn xóa nhà cung cấp này?"
-            onConfirm={() => handleDelete(record.SupplierID)}
+            onConfirm={() => handleDelete(record._id)}
             okText="Xóa"
             cancelText="Hủy"
           >
@@ -129,7 +129,7 @@ const SupplierList = () => {
       const url = force ? `${supplierId}?force=true` : supplierId;
       const response = await supplierAPI.deleteSupplier(url);
       if (response.data.success) {
-        setSuppliers(suppliers.filter(s => s.SupplierID !== supplierId));
+        setSuppliers(suppliers.filter(s => s._id !== supplierId));
         message.success('Xóa nhà cung cấp thành công');
       } else {
         message.error(response.data.message || 'Lỗi xóa nhà cung cấp');
@@ -158,10 +158,10 @@ const SupplierList = () => {
     try {
       if (editingSupplier) {
         // Cập nhật
-        const response = await supplierAPI.updateSupplier(editingSupplier.SupplierID, values);
+        const response = await supplierAPI.updateSupplier(editingSupplier._id, values);
         if (response.data.success) {
           const updatedSuppliers = suppliers.map(s => 
-            s.SupplierID === editingSupplier.SupplierID 
+            s._id === editingSupplier._id 
               ? { ...s, ...values }
               : s
           );
@@ -212,7 +212,7 @@ const SupplierList = () => {
         columns={columns}
         dataSource={suppliers}
         loading={loading}
-        rowKey="SupplierID"
+        rowKey="_id"
         pagination={{ pageSize: 10 }}
       />
 
@@ -229,7 +229,7 @@ const SupplierList = () => {
           onFinish={handleSubmit}
         >
           <Form.Item
-            name="Name"
+            name="name"
             label="Tên nhà cung cấp"
             rules={[{ required: true, message: 'Vui lòng nhập tên nhà cung cấp' }]}
           >
@@ -237,7 +237,7 @@ const SupplierList = () => {
           </Form.Item>
 
           <Form.Item
-            name="TaxCode"
+            name="taxCode"
             label="Mã số thuế"
           >
             <Input placeholder="Nhập mã số thuế (không bắt buộc)" />
@@ -245,7 +245,7 @@ const SupplierList = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <Form.Item
-              name="Phone"
+              name="phone"
               label="Số điện thoại"
               rules={[
                 { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' }
@@ -255,7 +255,7 @@ const SupplierList = () => {
             </Form.Item>
 
             <Form.Item
-              name="Email"
+              name="email"
               label="Email"
               rules={[
                 { type: 'email', message: 'Email không hợp lệ' }
@@ -266,7 +266,7 @@ const SupplierList = () => {
           </div>
 
           <Form.Item
-            name="Address"
+            name="address"
             label="Địa chỉ"
             rules={[]}
           >

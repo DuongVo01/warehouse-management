@@ -22,7 +22,7 @@ const InventoryImport = () => {
     try {
       const response = await productAPI.getProducts({ limit: 100 });
       if (response.data.success) {
-        const activeProducts = response.data.data.filter(p => p.IsActive !== false);
+        const activeProducts = response.data.data.filter(p => p.isActive !== false);
         setProducts(activeProducts);
       }
     } catch (error) {
@@ -64,7 +64,7 @@ const InventoryImport = () => {
   ];
 
   const addItem = (values) => {
-    const product = products.find(p => p.ProductID === values.productId);
+    const product = products.find(p => p._id === values.productId);
     if (!product) {
       message.error('Vui lòng chọn sản phẩm');
       return;
@@ -81,7 +81,7 @@ const InventoryImport = () => {
       // Thêm mới
       const newItem = {
         productId: values.productId,
-        productName: `${product.SKU} - ${product.Name}`,
+        productName: `${product.sku} - ${product.name}`,
         quantity: values.quantity,
         unitPrice: values.unitPrice
       };
@@ -106,14 +106,14 @@ const InventoryImport = () => {
       // Gọi API cho từng sản phẩm
       for (const item of items) {
         const importData = {
-          productID: item.productId,
+          productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          supplierID: values.supplierId,
+          supplierId: values.supplierId,
           note: values.note || 'Nhập kho'
         };
         
-        await inventoryAPI.createImport(importData);
+        await inventoryAPI.importInventory(importData);
       }
       
       message.success(`Nhập kho thành công ${items.length} sản phẩm`);
@@ -144,17 +144,17 @@ const InventoryImport = () => {
               placeholder="Chọn nhà cung cấp"
               showSearch
               filterOption={(input, option) => {
-                const supplier = suppliers.find(s => s.SupplierID === option.value);
+                const supplier = suppliers.find(s => s._id === option.value);
                 if (supplier) {
-                  const searchText = `${supplier.SupplierCode} ${supplier.Name}`.toLowerCase();
+                  const searchText = `${supplier.supplierCode} ${supplier.name}`.toLowerCase();
                   return searchText.includes(input.toLowerCase());
                 }
                 return false;
               }}
             >
               {suppliers.map(supplier => (
-                <Select.Option key={supplier.SupplierID} value={supplier.SupplierID}>
-                  {supplier.SupplierCode} - {supplier.Name}
+                <Select.Option key={supplier._id} value={supplier._id}>
+                  {supplier.supplierCode} - {supplier.name}
                 </Select.Option>
               ))}
             </Select>
@@ -172,17 +172,17 @@ const InventoryImport = () => {
                 placeholder="Chọn sản phẩm" 
                 showSearch
                 filterOption={(input, option) => {
-                  const product = products.find(p => p.ProductID === option.value);
+                  const product = products.find(p => p._id === option.value);
                   if (product) {
-                    const searchText = `${product.SKU} ${product.Name}`.toLowerCase();
+                    const searchText = `${product.sku} ${product.name}`.toLowerCase();
                     return searchText.includes(input.toLowerCase());
                   }
                   return false;
                 }}
               >
                 {products.map(product => (
-                  <Select.Option key={product.ProductID} value={product.ProductID}>
-                    {product.SKU} - {product.Name}
+                  <Select.Option key={product._id} value={product._id}>
+                    {product.sku} - {product.name}
                   </Select.Option>
                 ))}
               </Select>

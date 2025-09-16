@@ -17,12 +17,12 @@ const StockBalance = () => {
   });
 
   const columns = [
-    { title: 'Mã SP', dataIndex: ['Product', 'SKU'], key: 'sku' },
-    { title: 'Tên sản phẩm', dataIndex: ['Product', 'Name'], key: 'productName' },
-    { title: 'Đơn vị', dataIndex: ['Product', 'Unit'], key: 'unit' },
+    { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
+    { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'productName' },
+    { title: 'Đơn vị', dataIndex: ['productId', 'unit'], key: 'unit' },
     { 
       title: 'Tồn kho', 
-      dataIndex: 'Quantity', 
+      dataIndex: 'quantity', 
       key: 'quantity',
       render: (value) => (
         <span style={{ 
@@ -33,16 +33,16 @@ const StockBalance = () => {
         </span>
       )
     },
-    { title: 'Vị trí', dataIndex: ['Product', 'Location'], key: 'location' },
+    { title: 'Vị trí', dataIndex: ['productId', 'location'], key: 'location' },
     { 
       title: 'Hạn sử dụng', 
-      dataIndex: ['Product', 'ExpiryDate'], 
+      dataIndex: ['productId', 'expiryDate'], 
       key: 'expiryDate',
       render: (value) => value ? new Date(value).toLocaleDateString('vi-VN') : '-'
     },
     { 
       title: 'Cập nhật cuối', 
-      dataIndex: 'LastUpdated', 
+      dataIndex: 'lastUpdated', 
       key: 'lastUpdated',
       render: (value) => value ? new Date(value).toLocaleDateString('vi-VN') : '-'
     },
@@ -50,8 +50,8 @@ const StockBalance = () => {
       title: 'Trạng thái', 
       key: 'status',
       render: (_, record) => {
-        const quantity = record.Quantity;
-        const expiryDate = record.Product?.ExpiryDate;
+        const quantity = record.quantity;
+        const expiryDate = record.productId?.expiryDate;
         
         if (quantity <= 10) {
           return <Tag color="red">Sắp hết</Tag>;
@@ -85,17 +85,17 @@ const StockBalance = () => {
     if (searchText.trim()) {
       const search = searchText.toLowerCase();
       filtered = filtered.filter(item => 
-        item.Product?.Name?.toLowerCase().includes(search) ||
-        item.Product?.SKU?.toLowerCase().includes(search) ||
-        item.Product?.Location?.toLowerCase().includes(search)
+        item.productId?.name?.toLowerCase().includes(search) ||
+        item.productId?.sku?.toLowerCase().includes(search) ||
+        item.productId?.location?.toLowerCase().includes(search)
       );
     }
     
     // Lọc theo trạng thái
     if (filterStatus !== 'all') {
       filtered = filtered.filter(item => {
-        const quantity = item.Quantity;
-        const expiryDate = item.Product?.ExpiryDate;
+        const quantity = item.quantity;
+        const expiryDate = item.productId?.expiryDate;
         
         switch (filterStatus) {
           case 'low-stock':
@@ -116,10 +116,10 @@ const StockBalance = () => {
     
     // Tính toán thống kê
     const totalProducts = filtered.length;
-    const totalQuantity = filtered.reduce((sum, item) => sum + (item.Quantity || 0), 0);
-    const lowStockCount = filtered.filter(item => item.Quantity <= 10).length;
+    const totalQuantity = filtered.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const lowStockCount = filtered.filter(item => item.quantity <= 10).length;
     const expiringCount = filtered.filter(item => {
-      const expiryDate = item.Product?.ExpiryDate;
+      const expiryDate = item.productId?.expiryDate;
       return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
     }).length;
     
@@ -158,8 +158,8 @@ const StockBalance = () => {
 
     // Chuẩn bị dữ liệu xuất
     const exportData = stockData.map((item, index) => {
-      const quantity = item.Quantity;
-      const expiryDate = item.Product?.ExpiryDate;
+      const quantity = item.quantity;
+      const expiryDate = item.productId?.expiryDate;
       let status = 'Bình thường';
       
       if (quantity <= 10) {
@@ -172,13 +172,13 @@ const StockBalance = () => {
       
       return {
         'STT': index + 1,
-        'Mã SP': item.Product?.SKU || '',
-        'Tên sản phẩm': item.Product?.Name || '',
-        'Đơn vị': item.Product?.Unit || '',
-        'Tồn kho': item.Quantity || 0,
-        'Vị trí': item.Product?.Location || '',
+        'Mã SP': item.productId?.sku || '',
+        'Tên sản phẩm': item.productId?.name || '',
+        'Đơn vị': item.productId?.unit || '',
+        'Tồn kho': item.quantity || 0,
+        'Vị trí': item.productId?.location || '',
         'Hạn sử dụng': expiryDate ? new Date(expiryDate).toLocaleDateString('vi-VN') : '',
-        'Cập nhật cuối': item.LastUpdated ? new Date(item.LastUpdated).toLocaleDateString('vi-VN') : '',
+        'Cập nhật cuối': item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString('vi-VN') : '',
         'Trạng thái': status
       };
     });
@@ -291,7 +291,7 @@ const StockBalance = () => {
         columns={columns}
         dataSource={stockData}
         loading={loading}
-        rowKey="ProductID"
+        rowKey="_id"
         pagination={{ pageSize: 20 }}
         scroll={{ x: 1000 }}
       />

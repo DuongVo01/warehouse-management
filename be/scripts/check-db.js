@@ -1,24 +1,35 @@
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
 const checkDatabase = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Kết nối database thành công');
+    await mongoose.connect('mongodb://localhost:27017/warehouse_management');
+    console.log('✅ Kết nối MongoDB thành công');
 
-    // Lấy danh sách bảng
-    const [results] = await sequelize.query("SELECT name FROM sqlite_master WHERE type='table'");
-    console.log('\n📋 Danh sách bảng:');
-    results.forEach(table => console.log(`  - ${table.name}`));
+    // Lấy danh sách collections
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    console.log('\n📋 Danh sách collections:');
+    collections.forEach(col => console.log(`  - ${col.name}`));
 
-    // Kiểm tra cấu trúc bảng users
-    const [userSchema] = await sequelize.query("PRAGMA table_info(users)");
-    console.log('\n👤 Cấu trúc bảng users:');
-    userSchema.forEach(col => console.log(`  - ${col.name}: ${col.type}`));
+    // Kiểm tra số lượng documents
+    const User = require('../models/User');
+    const Product = require('../models/Product');
+    const Supplier = require('../models/Supplier');
 
-    // Kiểm tra cấu trúc bảng products
-    const [productSchema] = await sequelize.query("PRAGMA table_info(products)");
-    console.log('\n📦 Cấu trúc bảng products:');
-    productSchema.forEach(col => console.log(`  - ${col.name}: ${col.type}`));
+    const userCount = await User.countDocuments();
+    const productCount = await Product.countDocuments();
+    const supplierCount = await Supplier.countDocuments();
+
+    console.log('\n📊 Số lượng documents:');
+    console.log(`  - Users: ${userCount}`);
+    console.log(`  - Products: ${productCount}`);
+    console.log(`  - Suppliers: ${supplierCount}`);
+
+    // Hiển thị users
+    const users = await User.find({}, { passwordHash: 0 });
+    console.log('\n👤 Danh sách users:');
+    users.forEach(user => {
+      console.log(`  - ${user.employeeCode}: ${user.username} (${user.fullName}) - ${user.role}`);
+    });
 
     console.log('\n✅ Kiểm tra hoàn thành!');
     process.exit(0);

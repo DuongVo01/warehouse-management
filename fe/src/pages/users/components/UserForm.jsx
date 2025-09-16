@@ -11,7 +11,7 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
     >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <Form.Item
-          name="Username"
+          name="username"
           label="Tên đăng nhập"
           rules={FORM_RULES.username}
         >
@@ -19,35 +19,24 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
         </Form.Item>
 
         <Form.Item
-          name="FullName"
+          name="employeeCode"
+          label="Mã nhân viên"
+        >
+          <Input placeholder="Tự động tạo" disabled />
+        </Form.Item>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <Form.Item
+          name="fullName"
           label="Họ tên"
           rules={FORM_RULES.fullName}
         >
           <Input placeholder="Nhập họ tên đầy đủ" />
         </Form.Item>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <Form.Item
-          name="Email"
-          label="Email"
-          rules={FORM_RULES.email}
-        >
-          <Input placeholder="Nhập email" />
-        </Form.Item>
 
         <Form.Item
-          name="Phone"
-          label="Số điện thoại"
-          rules={FORM_RULES.phone}
-        >
-          <Input placeholder="Nhập số điện thoại" />
-        </Form.Item>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <Form.Item
-          name="Role"
+          name="role"
           label="Vai trò"
           rules={FORM_RULES.role}
         >
@@ -59,9 +48,29 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
             ))}
           </Select>
         </Form.Item>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={FORM_RULES.email}
+        >
+          <Input placeholder="Nhập email" />
+        </Form.Item>
 
         <Form.Item
-          name="IsActive"
+          name="phone"
+          label="Số điện thoại"
+          rules={FORM_RULES.phone}
+        >
+          <Input placeholder="Nhập số điện thoại" />
+        </Form.Item>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+        <Form.Item
+          name="isActive"
           label="Trạng thái"
           initialValue={true}
         >
@@ -73,7 +82,7 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
       </div>
 
       <Form.Item
-        name="Password"
+        name="password"
         label={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"}
         rules={editingUser ? [] : FORM_RULES.password}
       >

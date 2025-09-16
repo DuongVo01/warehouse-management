@@ -1,47 +1,48 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const User = sequelize.define('User', {
-  UserID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  Username: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
     unique: true,
+    trim: true
   },
-  PasswordHash: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
+  employeeCode: {
+    type: String,
+    required: true,
+    unique: true
   },
-  FullName: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
+  passwordHash: {
+    type: String,
+    required: true
   },
-  Role: {
-    type: DataTypes.ENUM('Admin', 'Staff', 'Accountant'),
-    allowNull: false,
+  fullName: {
+    type: String,
+    required: true,
+    trim: true
   },
-  Email: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
+  role: {
+    type: String,
+    required: true,
+    enum: ['Admin', 'Staff', 'Accountant']
+  },
+  email: {
+    type: String,
+    required: true,
     unique: true,
+    trim: true,
+    lowercase: true
   },
-  Phone: {
-    type: DataTypes.STRING(20),
-    allowNull: true,
+  phone: {
+    type: String,
+    trim: true
   },
-  IsActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 }, {
-  tableName: 'users',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

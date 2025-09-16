@@ -1,14 +1,11 @@
 const express = require('express');
-const { connectDB } = require('./config/database');
+const connectDB = require('./config/database-mongodb');
 const envConfig = require('./config/env');
 const logger = require('./config/logger');
 const { errorHandler, notFound, requestLogger } = require('./middleware');
 
 // Import routes
 const routes = require('./routes');
-
-// Import models để tạo relationships
-require('./models');
 
 const app = express();
 
@@ -30,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
 // Routes
-app.use(envConfig.API_PREFIX, routes);
+app.use('/api', routes);
 
 // Error handling
 app.use(notFound);
@@ -44,14 +41,14 @@ const startServer = async () => {
     
     // Tạo thư mục reports nếu chưa có
     const fs = require('fs');
-    if (!fs.existsSync(envConfig.REPORT_EXPORT_PATH)) {
-      fs.mkdirSync(envConfig.REPORT_EXPORT_PATH, { recursive: true });
+    if (!fs.existsSync('./reports')) {
+      fs.mkdirSync('./reports', { recursive: true });
     }
 
     // Start server
-    app.listen(envConfig.PORT, () => {
-      logger.info(`Server đang chạy trên port ${envConfig.PORT}`);
-      logger.info(`API endpoint: http://localhost:${envConfig.PORT}${envConfig.API_PREFIX}`);
+    app.listen(3000, () => {
+      logger.info('Server đang chạy trên port 3000');
+      logger.info('API endpoint: http://localhost:3000/api');
     });
   } catch (error) {
     logger.error('Lỗi khởi động server:', error);

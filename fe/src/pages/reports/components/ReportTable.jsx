@@ -2,13 +2,16 @@ import React from 'react';
 import { Card, Table } from 'antd';
 
 const ReportTable = ({ columns, reportData, loading, reportTypes, reportType }) => {
+  // Đảm bảo reportData luôn là array
+  const safeReportData = Array.isArray(reportData) ? reportData : [];
+  
   return (
     <Card>
       <Table
         columns={columns}
-        dataSource={reportData}
+        dataSource={safeReportData}
         loading={loading}
-        rowKey={(record) => record.ProductID || record.TransactionID || record.id}
+        rowKey={(record) => record._id || record.id || Math.random()}
         pagination={{ pageSize: 20 }}
         scroll={{ x: 1000 }}
         title={() => (
@@ -17,7 +20,7 @@ const ReportTable = ({ columns, reportData, loading, reportTypes, reportType }) 
               {reportTypes.find(t => t.value === reportType)?.label}
             </span>
             <span style={{ color: '#666' }}>
-              Tổng cộng: {reportData.length} bản ghi
+              Tổng cộng: {safeReportData.length} bản ghi
             </span>
           </div>
         )}

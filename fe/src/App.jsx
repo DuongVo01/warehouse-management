@@ -13,6 +13,7 @@ import StockCheck from './pages/inventory/StockCheck';
 import SupplierList from './pages/suppliers/SupplierList';
 import ReportList from './pages/reports/ReportList';
 import UserList from './pages/users/UserList';
+import Profile from './pages/profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
                 <UserList />
               </ProtectedRoute>
             } />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>

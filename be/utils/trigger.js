@@ -1,5 +1,7 @@
-const { InventoryBalance, InventoryTransaction } = require('../models');
-const { EmailService } = require('../services');
+const InventoryBalance = require('../models/InventoryBalance');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const Product = require('../models/Product');
+const EmailService = require('../services/emailService');
 const logger = require('../config/logger');
 
 class TriggerUtils {
@@ -10,12 +12,12 @@ class TriggerUtils {
       await this.updateInventoryBalance(transaction);
 
       // Kiểm tra cảnh báo tồn thấp
-      if (transaction.TransactionType === 'Export') {
-        await this.checkLowStockAlert(transaction.ProductID);
+      if (transaction.transactionType === 'Export') {
+        await this.checkLowStockAlert(transaction.productId);
       }
 
       // Cảnh báo giao dịch lớn
-      const transactionValue = Math.abs(transaction.Quantity) * (transaction.UnitPrice || 0);
+      const transactionValue = Math.abs(transaction.quantity) * (transaction.unitPrice || 0);
       if (transactionValue > 10000000) { // 10 triệu VNĐ
         await this.sendLargeTransactionAlert(transaction);
       }
@@ -27,30 +29,32 @@ class TriggerUtils {
 
   // Cập nhật tồn kho
   static async updateInventoryBalance(transaction) {
-    const [balance, created] = await InventoryBalance.findOrCreate({
-      where: { ProductID: transaction.ProductID },
-      defaults: { Quantity: 0 }
-    });
+    let balance = await InventoryBalance.findOne({ productId: transaction.productId });
 
-    const newQuantity = balance.Quantity + transaction.Quantity;
-    await balance.update({
-      Quantity: Math.max(0, newQuantity), // Không cho phép âm
-      LastUpdated: new Date()
-    });
+    if (balance) {
+      const newQuantity = balance.quantity + transaction.quantity;
+      balance.quantity = Math.max(0, newQuantity); // Không cho phép âm
+      balance.lastUpdated = new Date();
+      await balance.save();
+    } else {
+      balance = await InventoryBalance.create({
+        productId: transaction.productId,
+        quantity: Math.max(0, transaction.quantity),
+        lastUpdated: new Date()
+      });
+    }
 
     return balance;
   }
 
   // Kiểm tra cảnh báo tồn thấp
   static async checkLowStockAlert(productId, threshold = 10) {
-    const balance = await InventoryBalance.findOne({
-      where: { ProductID: productId },
-      include: [{ model: require('../models').Product }]
-    });
+    const balance = await InventoryBalance.findOne({ productId })
+      .populate('productId', 'name sku unit');
 
-    if (balance && balance.Quantity <= threshold) {
+    if (balance && balance.quantity <= threshold) {
       // Gửi cảnh báo (giả lập)
-      logger.warn(`Low stock alert: Product ${balance.Product?.Name} - Quantity: ${balance.Quantity}`);
+      logger.warn(`Low stock alert: Product ${balance.productId?.name} - Quantity: ${balance.quantity}`);
       
       // Có thể gửi email cảnh báo
       // await EmailService.sendLowStockAlert([balance], ['admin@company.com']);
@@ -59,7 +63,7 @@ class TriggerUtils {
 
   // Cảnh báo giao dịch lớn
   static async sendLargeTransactionAlert(transaction) {
-    logger.warn(`Large transaction alert: Transaction ${transaction.TransactionID} - Value: ${Math.abs(transaction.Quantity) * (transaction.UnitPrice || 0)}`);
+    logger.warn(`Large transaction alert: Transaction ${transaction._id} - Value: ${Math.abs(transaction.quantity) * (transaction.unitPrice || 0)}`);
     
     // Có thể gửi email cảnh báo
     // await EmailService.sendLargeTransactionAlert(transaction, ['manager@company.com']);
@@ -68,17 +72,17 @@ class TriggerUtils {
   // Trigger sau khi duyệt kiểm kê
   static async afterStockCheckApproval(stockCheck) {
     try {
-      if (stockCheck.Status === 'Approved' && stockCheck.Difference !== 0) {
+      if (stockCheck.status === 'Approved' && stockCheck.difference !== 0) {
         // Tạo giao dịch điều chỉnh
         await InventoryTransaction.create({
-          ProductID: stockCheck.ProductID,
-          TransactionType: 'Adjust',
-          Quantity: stockCheck.Difference,
-          Note: `Điều chỉnh từ kiểm kê #${stockCheck.StockCheckID}`,
-          CreatedBy: stockCheck.ApprovedBy
+          productId: stockCheck.productId,
+          transactionType: stockCheck.difference > 0 ? 'Import' : 'Export',
+          quantity: Math.abs(stockCheck.difference),
+          note: `Điều chỉnh từ kiểm kê #${stockCheck._id}`,
+          createdBy: stockCheck.approvedBy
         });
 
-        logger.info(`Stock adjustment created for StockCheck ${stockCheck.StockCheckID}`);
+        logger.info(`Stock adjustment created for StockCheck ${stockCheck._id}`);
       }
     } catch (error) {
       logger.error('Error in afterStockCheckApproval trigger:', error);
@@ -88,31 +92,29 @@ class TriggerUtils {
   // Kiểm tra hàng sắp hết hạn (chạy định kỳ)
   static async checkExpiringProducts(days = 30) {
     try {
-      const { Product, InventoryBalance } = require('../models');
-      const { Op } = require('sequelize');
-      
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + days);
 
-      const expiringProducts = await Product.findAll({
-        where: {
-          ExpiryDate: {
-            [Op.lte]: expiryDate,
-            [Op.gte]: new Date()
-          }
-        },
-        include: [{
-          model: InventoryBalance,
-          where: { Quantity: { [Op.gt]: 0 } }
-        }]
+      const expiringProducts = await Product.find({
+        expiryDate: {
+          $lte: expiryDate,
+          $gte: new Date()
+        }
       });
 
-      if (expiringProducts.length > 0) {
-        logger.warn(`Found ${expiringProducts.length} products expiring in ${days} days`);
-        // await EmailService.sendExpiryAlert(expiringProducts, ['warehouse@company.com']);
+      // Lấy tồn kho cho các sản phẩm này
+      const productIds = expiringProducts.map(p => p._id);
+      const balances = await InventoryBalance.find({
+        productId: { $in: productIds },
+        quantity: { $gt: 0 }
+      }).populate('productId');
+
+      if (balances.length > 0) {
+        logger.warn(`Found ${balances.length} products expiring in ${days} days`);
+        // await EmailService.sendExpiryAlert(balances, ['warehouse@company.com']);
       }
 
-      return expiringProducts;
+      return balances;
     } catch (error) {
       logger.error('Error checking expiring products:', error);
     }
@@ -123,7 +125,7 @@ class TriggerUtils {
     try {
       const backupData = {
         timestamp: new Date().toISOString(),
-        tables: ['users', 'products', 'suppliers', 'inventory_transactions', 'inventory_balance']
+        collections: ['users', 'products', 'suppliers', 'inventorytransactions', 'inventorybalances']
       };
 
       logger.info('Data backup completed', backupData);

@@ -15,12 +15,12 @@ const ProductList = () => {
   console.log('ProductList render - products:', products, 'type:', typeof products, 'isArray:', Array.isArray(products));
 
   const columns = [
-    { title: 'Mã SP', dataIndex: 'SKU', key: 'SKU' },
-    { title: 'Tên sản phẩm', dataIndex: 'Name', key: 'Name' },
-    { title: 'Đơn vị', dataIndex: 'Unit', key: 'Unit' },
-    { title: 'Giá nhập', dataIndex: 'CostPrice', key: 'CostPrice', render: (value) => `${value?.toLocaleString()} đ` },
-    { title: 'Giá bán', dataIndex: 'SalePrice', key: 'SalePrice', render: (value) => `${value?.toLocaleString()} đ` },
-    { title: 'Vị trí', dataIndex: 'Location', key: 'Location' },
+    { title: 'Mã SP', dataIndex: 'sku', key: 'sku' },
+    { title: 'Tên sản phẩm', dataIndex: 'name', key: 'name' },
+    { title: 'Đơn vị', dataIndex: 'unit', key: 'unit' },
+    { title: 'Giá nhập', dataIndex: 'costPrice', key: 'costPrice', render: (value) => `${value?.toLocaleString()} đ` },
+    { title: 'Giá bán', dataIndex: 'salePrice', key: 'salePrice', render: (value) => `${value?.toLocaleString()} đ` },
+    { title: 'Vị trí', dataIndex: 'location', key: 'location' },
     {
       title: 'Thao tác',
       key: 'action',
@@ -62,7 +62,7 @@ const ProductList = () => {
       console.log('API response:', response.data);
       if (response.data.success) {
         // Chỉ hiển thị sản phẩm đang hoạt động
-        const activeProducts = response.data.data.filter(product => product.IsActive !== false);
+        const activeProducts = response.data.data.filter(product => product.isActive !== false);
         setProducts(Array.isArray(activeProducts) ? activeProducts : []);
       } else {
         setProducts([]);
@@ -101,13 +101,13 @@ const ProductList = () => {
   const handleEdit = (product) => {
     setEditingProduct(product);
     form.setFieldsValue({
-      sku: product.SKU,
-      name: product.Name,
-      unit: product.Unit,
-      costPrice: product.CostPrice,
-      salePrice: product.SalePrice,
-      expiryDate: product.ExpiryDate ? dayjs(product.ExpiryDate) : null,
-      location: product.Location
+      sku: product.sku,
+      name: product.name,
+      unit: product.unit,
+      costPrice: product.costPrice,
+      salePrice: product.salePrice,
+      expiryDate: product.expiryDate ? dayjs(product.expiryDate) : null,
+      location: product.location
     });
     setIsModalVisible(true);
   };
@@ -116,14 +116,14 @@ const ProductList = () => {
     Modal.confirm({
       title: 'Xác nhận xóa',
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${product.Name}"? Sản phẩm sẽ không hiển thị trong danh sách nhưng dữ liệu vẫn được bảo tồn.`,
+      content: `Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${product.name}"? Sản phẩm sẽ không hiển thị trong danh sách nhưng dữ liệu vẫn được bảo tồn.`,
       okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          console.log('Deleting product with ID:', product.ProductID);
-          const response = await productAPI.deleteProduct(product.ProductID);
+          console.log('Deleting product with ID:', product._id);
+          const response = await productAPI.deleteProduct(product._id);
           console.log('Delete response:', response.data);
           
           if (response.data.success) {
@@ -162,7 +162,7 @@ const ProductList = () => {
 
       let response;
       if (editingProduct) {
-        response = await productAPI.updateProduct(editingProduct.ProductID, productData);
+        response = await productAPI.updateProduct(editingProduct._id, productData);
         message.success('Cập nhật sản phẩm thành công');
       } else {
         response = await productAPI.createProduct(productData);
@@ -219,7 +219,7 @@ const ProductList = () => {
         columns={columns}
         dataSource={Array.isArray(products) ? products : []}
         loading={loading}
-        rowKey="ProductID"
+        rowKey="_id"
         pagination={{ pageSize: 10 }}
       />
 

@@ -79,7 +79,7 @@ const MainLayout = () => {
 
   const userMenu = (
     <Menu items={[
-      { key: 'profile', label: 'Thông tin cá nhân' },
+      { key: 'profile', label: 'Thông tin cá nhân', onClick: () => navigate('/profile') },
       { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, onClick: handleLogout }
     ]} />
   );

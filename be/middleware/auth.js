@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
-const envConfig = require('../config/env');
+const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
@@ -10,12 +9,10 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Token không được cung cấp' });
     }
 
-    const decoded = jwt.verify(token, envConfig.JWT_SECRET);
-    const user = await User.findByPk(decoded.userId, {
-      attributes: { exclude: ['PasswordHash'] }
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const user = await User.findById(decoded.userId, { passwordHash: 0 });
 
-    if (!user || !user.IsActive) {
+    if (!user || !user.isActive) {
       return res.status(401).json({ success: false, message: 'Token không hợp lệ' });
     }
 

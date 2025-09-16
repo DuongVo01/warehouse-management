@@ -31,7 +31,7 @@ export const useUsers = () => {
     try {
       const response = await userAPI.deleteUser(userId);
       if (response.data.success) {
-        setUsers(users.filter(u => u.UserID !== userId));
+        setUsers(users.filter(u => u._id !== userId));
         message.success('Xóa người dùng thành công');
       } else {
         message.error(response.data.message || 'Lỗi xóa người dùng');
@@ -49,7 +49,7 @@ export const useUsers = () => {
   const saveUser = async (userData, editingUser) => {
     try {
       if (editingUser) {
-        const response = await userAPI.updateUser(editingUser.UserID, userData);
+        const response = await userAPI.updateUser(editingUser._id, userData);
         if (response.data.success) {
           await loadUsers();
           message.success('Cập nhật người dùng thành công');

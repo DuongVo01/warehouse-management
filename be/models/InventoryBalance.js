@@ -1,28 +1,21 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const InventoryBalance = sequelize.define('InventoryBalance', {
-  ProductID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    references: {
-      model: 'products',
-      key: 'ProductID',
-    },
+const inventoryBalanceSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+    unique: true
   },
-  Quantity: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
+  quantity: {
+    type: Number,
+    required: true,
+    default: 0
   },
-  LastUpdated: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW,
-  },
-}, {
-  tableName: 'inventory_balance',
-  timestamps: false,
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-module.exports = InventoryBalance;
+module.exports = mongoose.model('InventoryBalance', inventoryBalanceSchema);

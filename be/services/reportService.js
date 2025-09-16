@@ -2,8 +2,10 @@ const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-const { InventoryTransaction, InventoryBalance, Product, Supplier } = require('../models');
-const { Op } = require('sequelize');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const InventoryBalance = require('../models/InventoryBalance');
+const Product = require('../models/Product');
+const Supplier = require('../models/Supplier');
 
 class ReportService {
   // Tạo báo cáo Excel
@@ -15,24 +17,24 @@ class ReportService {
       case 'Import':
       case 'Export':
         worksheet.columns = [
-          { header: 'Mã giao dịch', key: 'TransactionID', width: 15 },
+          { header: 'Mã giao dịch', key: 'transactionId', width: 15 },
           { header: 'SKU', key: 'sku', width: 15 },
           { header: 'Tên sản phẩm', key: 'productName', width: 30 },
-          { header: 'Số lượng', key: 'Quantity', width: 12 },
-          { header: 'Đơn giá', key: 'UnitPrice', width: 15 },
+          { header: 'Số lượng', key: 'quantity', width: 12 },
+          { header: 'Đơn giá', key: 'unitPrice', width: 15 },
           { header: 'Nhà cung cấp', key: 'supplierName', width: 25 },
-          { header: 'Ngày tạo', key: 'CreatedAt', width: 20 }
+          { header: 'Ngày tạo', key: 'createdAt', width: 20 }
         ];
         
         data.forEach(item => {
           worksheet.addRow({
-            TransactionID: item.TransactionID,
-            sku: item.Product?.SKU,
-            productName: item.Product?.Name,
-            Quantity: item.Quantity,
-            UnitPrice: item.UnitPrice,
-            supplierName: item.Supplier?.Name,
-            CreatedAt: item.CreatedAt
+            transactionId: item._id,
+            sku: item.productId?.sku,
+            productName: item.productId?.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            supplierName: item.supplierId?.name,
+            createdAt: item.createdAt
           });
         });
         break;
@@ -42,22 +44,22 @@ class ReportService {
           { header: 'SKU', key: 'sku', width: 15 },
           { header: 'Tên sản phẩm', key: 'productName', width: 30 },
           { header: 'Đơn vị', key: 'unit', width: 10 },
-          { header: 'Tồn kho', key: 'Quantity', width: 12 },
+          { header: 'Tồn kho', key: 'quantity', width: 12 },
           { header: 'Giá nhập', key: 'costPrice', width: 15 },
           { header: 'Giá trị', key: 'value', width: 15 },
           { header: 'Vị trí', key: 'location', width: 15 }
         ];
 
         data.forEach(item => {
-          const value = item.Quantity * (item.Product?.CostPrice || 0);
+          const value = item.quantity * (item.productId?.costPrice || 0);
           worksheet.addRow({
-            sku: item.Product?.SKU,
-            productName: item.Product?.Name,
-            unit: item.Product?.Unit,
-            Quantity: item.Quantity,
-            costPrice: item.Product?.CostPrice,
+            sku: item.productId?.sku,
+            productName: item.productId?.name,
+            unit: item.productId?.unit,
+            quantity: item.quantity,
+            costPrice: item.productId?.costPrice,
             value: value,
-            location: item.Product?.Location
+            location: item.productId?.location
           });
         });
         break;
@@ -79,7 +81,7 @@ class ReportService {
 
     // Content (simplified)
     data.slice(0, 20).forEach((item, index) => {
-      doc.text(`${index + 1}. ${item.Product?.Name || 'N/A'} - SL: ${item.Quantity || 0}`);
+      doc.text(`${index + 1}. ${item.productId?.name || 'N/A'} - SL: ${item.quantity || 0}`);
     });
 
     if (data.length > 20) {
@@ -92,30 +94,23 @@ class ReportService {
 
   // Lấy dữ liệu báo cáo nhập/xuất
   static async getImportExportData(startDate, endDate, type) {
-    return await InventoryTransaction.findAll({
-      where: {
-        TransactionType: type,
-        CreatedAt: {
-          [Op.between]: [new Date(startDate), new Date(endDate)]
-        }
-      },
-      include: [
-        { model: Product, attributes: ['SKU', 'Name', 'Unit'] },
-        { model: Supplier, attributes: ['Name'] }
-      ],
-      order: [['CreatedAt', 'DESC']]
-    });
+    return await InventoryTransaction.find({
+      transactionType: type,
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    })
+    .populate('productId', 'sku name unit')
+    .populate('supplierId', 'name')
+    .sort({ createdAt: -1 });
   }
 
   // Lấy dữ liệu báo cáo tồn kho
   static async getInventoryData() {
-    return await InventoryBalance.findAll({
-      include: [{
-        model: Product,
-        attributes: ['SKU', 'Name', 'Unit', 'CostPrice', 'Location']
-      }],
-      order: [['LastUpdated', 'DESC']]
-    });
+    return await InventoryBalance.find()
+      .populate('productId', 'sku name unit costPrice location')
+      .sort({ lastUpdated: -1 });
   }
 
   // Lấy dữ liệu hàng sắp hết hạn
@@ -123,64 +118,91 @@ class ReportService {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + parseInt(days));
 
-    return await Product.findAll({
-      where: {
-        ExpiryDate: {
-          [Op.lte]: expiryDate,
-          [Op.gte]: new Date()
-        }
-      },
-      include: [{
-        model: InventoryBalance,
-        where: { Quantity: { [Op.gt]: 0 } }
-      }],
-      order: [['ExpiryDate', 'ASC']]
-    });
+    const products = await Product.find({
+      expiryDate: {
+        $lte: expiryDate,
+        $gte: new Date()
+      }
+    }).sort({ expiryDate: 1 });
+
+    // Lấy tồn kho cho các sản phẩm này
+    const productIds = products.map(p => p._id);
+    const balances = await InventoryBalance.find({
+      productId: { $in: productIds },
+      quantity: { $gt: 0 }
+    }).populate('productId');
+
+    return balances;
   }
 
   // Tạo thống kê tổng quan
   static async generateSummaryStats(startDate, endDate) {
     const [importStats, exportStats, inventoryValue] = await Promise.all([
-      InventoryTransaction.findAll({
-        where: {
-          TransactionType: 'Import',
-          CreatedAt: { [Op.between]: [new Date(startDate), new Date(endDate)] }
+      InventoryTransaction.aggregate([
+        {
+          $match: {
+            transactionType: 'Import',
+            createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
+          }
         },
-        attributes: [
-          [sequelize.fn('COUNT', sequelize.col('TransactionID')), 'count'],
-          [sequelize.fn('SUM', sequelize.col('Quantity')), 'totalQuantity'],
-          [sequelize.fn('SUM', sequelize.literal('Quantity * UnitPrice')), 'totalValue']
-        ]
-      }),
-      InventoryTransaction.findAll({
-        where: {
-          TransactionType: 'Export',
-          CreatedAt: { [Op.between]: [new Date(startDate), new Date(endDate)] }
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            totalQuantity: { $sum: '$quantity' },
+            totalValue: { $sum: { $multiply: ['$quantity', '$unitPrice'] } }
+          }
+        }
+      ]),
+      InventoryTransaction.aggregate([
+        {
+          $match: {
+            transactionType: 'Export',
+            createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
+          }
         },
-        attributes: [
-          [sequelize.fn('COUNT', sequelize.col('TransactionID')), 'count'],
-          [sequelize.fn('SUM', sequelize.literal('ABS(Quantity)')), 'totalQuantity']
-        ]
-      }),
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            totalQuantity: { $sum: { $abs: '$quantity' } }
+          }
+        }
+      ]),
       this.calculateInventoryValue()
     ]);
 
     return {
-      import: importStats[0]?.dataValues || { count: 0, totalQuantity: 0, totalValue: 0 },
-      export: exportStats[0]?.dataValues || { count: 0, totalQuantity: 0 },
+      import: importStats[0] || { count: 0, totalQuantity: 0, totalValue: 0 },
+      export: exportStats[0] || { count: 0, totalQuantity: 0 },
       inventoryValue
     };
   }
 
   static async calculateInventoryValue() {
-    const balances = await InventoryBalance.findAll({
-      include: [{ model: Product, attributes: ['CostPrice'] }]
-    });
+    const result = await InventoryBalance.aggregate([
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      {
+        $unwind: '$product'
+      },
+      {
+        $group: {
+          _id: null,
+          totalValue: {
+            $sum: { $multiply: ['$quantity', '$product.costPrice'] }
+          }
+        }
+      }
+    ]);
 
-    return balances.reduce((total, balance) => {
-      const costPrice = balance.Product?.CostPrice || 0;
-      return total + (balance.Quantity * costPrice);
-    }, 0);
+    return result[0]?.totalValue || 0;
   }
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { message } from 'antd';
+import { reportAPI } from '../../../services/api/reportAPI';
 import { inventoryAPI } from '../../../services/api/inventoryAPI';
 
 export const useReports = () => {
@@ -20,6 +21,13 @@ export const useReports = () => {
       }
     } catch (error) {
       console.error('Error loading stats:', error);
+      // Fallback nếu lỗi API
+      setStats({
+        totalProducts: 0,
+        totalValue: 0,
+        lowStockCount: 0,
+        expiringCount: 0
+      });
     }
   };
 
@@ -37,13 +45,26 @@ export const useReports = () => {
             params.startDate = dateRange[0].format('YYYY-MM-DD');
             params.endDate = dateRange[1].format('YYYY-MM-DD');
           }
-          response = await inventoryAPI.getTransactionHistory(params);
+          response = await inventoryAPI.getTransactions(params);
           break;
         case 'lowstock':
-          response = await inventoryAPI.getLowStockProducts({ limit: 100 });
+          response = await inventoryAPI.getBalance({ limit: 100 });
+          // Lọc chỉ lấy sản phẩm tồn thấp
+          if (response.data.success) {
+            const lowStockData = response.data.data.filter(item => item.quantity <= 10);
+            response.data.data = lowStockData;
+          }
           break;
         case 'expiring':
-          response = await inventoryAPI.getExpiringProducts({ limit: 100 });
+          response = await inventoryAPI.getBalance({ limit: 100 });
+          // Lọc chỉ lấy sản phẩm sắp hết hạn
+          if (response.data.success) {
+            const expiringData = response.data.data.filter(item => {
+              const expiryDate = item.productId?.expiryDate;
+              return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+            });
+            response.data.data = expiringData;
+          }
           break;
         default:
           response = { data: { success: true, data: [] } };
@@ -51,10 +72,15 @@ export const useReports = () => {
       
       if (response.data.success) {
         const data = response.data.data || [];
-        setReportData(data);
+        // Đảm bảo data luôn là array
+        setReportData(Array.isArray(data) ? data : []);
+      } else {
+        setReportData([]);
       }
     } catch (error) {
+      console.error('Generate report error:', error);
       message.error('Lỗi tải báo cáo');
+      setReportData([]);
     } finally {
       setLoading(false);
     }

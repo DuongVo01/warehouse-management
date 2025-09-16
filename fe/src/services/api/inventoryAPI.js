@@ -18,26 +18,16 @@ api.interceptors.request.use((config) => {
 });
 
 export const inventoryAPI = {
-  // Dashboard stats
-  getStats: () => api.get('/inventory/stats'),
-  getLowStock: () => api.get('/inventory/low-stock'),
-  getExpiring: () => api.get('/inventory/expiring'),
-  
-  // Inventory transactions
-  getTransactions: (params) => api.get('/inventory/transactions', { params }),
-  getTransactionHistory: (params) => api.get('/inventory/transactions', { params }),
-  createImport: (data) => api.post('/inventory/import', data),
-  createExport: (data) => api.post('/inventory/export', data),
+  // Inventory operations
+  importInventory: (data) => api.post('/inventory/import', data),
+  exportInventory: (data) => api.post('/inventory/export', data),
   
   // Stock balance
   getBalance: (params) => api.get('/inventory/balance', { params }),
   
-  // Reports
-  getLowStockProducts: (params) => api.get('/inventory/low-stock', { params }),
-  getExpiringProducts: (params) => api.get('/inventory/expiring', { params }),
+  // Stats
+  getStats: () => api.get('/inventory/stats'),
   
-  // Stock check
-  getStockChecks: (params) => api.get('/inventory/stock-checks', { params }),
-  createStockCheck: (data) => api.post('/inventory/stock-checks', data),
-  approveStockCheck: (id) => api.put(`/inventory/stock-checks/${id}/approve`)
+  // Transactions (if needed)
+  getTransactions: (params) => api.get('/inventory/transactions', { params })
 };

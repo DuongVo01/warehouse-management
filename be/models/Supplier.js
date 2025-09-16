@@ -1,43 +1,35 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database-sqlite');
+const mongoose = require('mongoose');
 
-const Supplier = sequelize.define('Supplier', {
-  SupplierID: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
+const supplierSchema = new mongoose.Schema({
+  supplierCode: {
+    type: String,
+    required: true,
+    unique: true
   },
-  SupplierCode: {
-    type: DataTypes.STRING(20),
-    allowNull: true,
-    unique: true,
-    field: 'SupplierCode'
+  name: {
+    type: String,
+    required: true,
+    trim: true
   },
-  Name: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
+  address: {
+    type: String,
+    trim: true
   },
-  Address: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
+  phone: {
+    type: String,
+    trim: true
   },
-  Phone: {
-    type: DataTypes.STRING(20),
-    allowNull: true,
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true
   },
-  Email: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-  },
-  TaxCode: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-  },
+  taxCode: {
+    type: String,
+    trim: true
+  }
 }, {
-  tableName: 'suppliers',
-  timestamps: true,
-  createdAt: 'CreatedAt',
-  updatedAt: false,
+  timestamps: true
 });
 
-module.exports = Supplier;
+module.exports = mongoose.model('Supplier', supplierSchema);
