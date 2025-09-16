@@ -3,6 +3,7 @@ import { Form, Input, Select, InputNumber, Button, Table, Space, DatePicker, mes
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { inventoryAPI } from '../../services/api/inventoryAPI';
 import { productAPI } from '../../services/api/productAPI';
+import { supplierAPI } from '../../services/api/supplierAPI';
 import dayjs from 'dayjs';
 
 const InventoryImport = () => {
@@ -30,12 +31,15 @@ const InventoryImport = () => {
   };
 
   const loadSuppliers = async () => {
-    // Tạm thời dùng dữ liệu giả
-    setSuppliers([
-      { SupplierID: 1, Name: 'Nhà cung cấp A' },
-      { SupplierID: 2, Name: 'Nhà cung cấp B' },
-      { SupplierID: 3, Name: 'Nhà cung cấp C' }
-    ]);
+    try {
+      const response = await supplierAPI.getSuppliers();
+      if (response.data.success) {
+        setSuppliers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+      message.error('Lỗi tải danh sách nhà cung cấp');
+    }
   };
 
   const columns = [
@@ -136,10 +140,21 @@ const InventoryImport = () => {
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
           <Form.Item name="supplierId" label="Nhà cung cấp" rules={[{ required: true }]}>
-            <Select placeholder="Chọn nhà cung cấp">
+            <Select 
+              placeholder="Chọn nhà cung cấp"
+              showSearch
+              filterOption={(input, option) => {
+                const supplier = suppliers.find(s => s.SupplierID === option.value);
+                if (supplier) {
+                  const searchText = `${supplier.SupplierCode} ${supplier.Name}`.toLowerCase();
+                  return searchText.includes(input.toLowerCase());
+                }
+                return false;
+              }}
+            >
               {suppliers.map(supplier => (
                 <Select.Option key={supplier.SupplierID} value={supplier.SupplierID}>
-                  {supplier.Name}
+                  {supplier.SupplierCode} - {supplier.Name}
                 </Select.Option>
               ))}
             </Select>

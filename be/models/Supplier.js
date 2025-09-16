@@ -7,6 +7,12 @@ const Supplier = sequelize.define('Supplier', {
     primaryKey: true,
     autoIncrement: true,
   },
+  SupplierCode: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    unique: true,
+    field: 'SupplierCode'
+  },
   Name: {
     type: DataTypes.STRING(100),
     allowNull: false,
