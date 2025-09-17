@@ -14,6 +14,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
     }
 
+    // Kiểm tra tài khoản có bị tạm khóa không
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Tài khoản đã bị tạm khóa. Vui lòng liên hệ quản trị viên.' });
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
