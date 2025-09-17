@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, message, Tag, Spin } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, message, Tag, Spin, Upload, Avatar } from 'antd';
+import { UserOutlined, MailOutlined, PhoneOutlined, UploadOutlined } from '@ant-design/icons';
 import { userAPI } from '../../services/api/userAPI';
 import { authAPI } from '../../services/api/authAPI';
 import { getRoleLabel } from '../../utils/roleUtils';
@@ -10,6 +10,22 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState({});
+
+  const handleAvatarUpload = async ({ file }) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    try {
+      const response = await userAPI.uploadAvatar(formData);
+      if (response.data.success) {
+        message.success('Cập nhật avatar thành công');
+        await loadUserProfile(); // Reload to get new avatar
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      message.error(error.response?.data?.message || 'Lỗi upload avatar');
+    }
+  };
 
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -90,6 +106,22 @@ const Profile = () => {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <Card title="Thông tin cá nhân">
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Avatar 
+            size={100} 
+            src={currentUser?.avatar ? `http://localhost:3000${currentUser.avatar}` : null}
+            icon={<UserOutlined />} 
+          />
+          <div style={{ marginTop: 16 }}>
+            <Upload
+              accept="image/*"
+              showUploadList={false}
+              customRequest={handleAvatarUpload}
+            >
+              <Button icon={<UploadOutlined />}>Thay đổi avatar</Button>
+            </Upload>
+          </div>
+        </div>
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item name="Username" label="Tên đăng nhập">
             <Input prefix={<UserOutlined />} disabled />

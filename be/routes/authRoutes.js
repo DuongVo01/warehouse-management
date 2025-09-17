@@ -70,6 +70,7 @@ router.get('/profile', auth, async (req, res) => {
         role: user.role,
         email: user.email,
         phone: user.phone,
+        avatar: user.avatar,
         employeeCode: user.employeeCode,
         isActive: user.isActive
       }

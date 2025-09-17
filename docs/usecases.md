@@ -1,123 +1,275 @@
 # Use Cases – Hệ thống Quản lý Kho hàng
 
 ## 1. Danh sách tác nhân (Actors)
-- **Admin (Quản trị viên)**: Quản lý hệ thống, phân quyền, báo cáo.
-- **Nhân viên kho (Staff)**: Nhập kho, xuất kho, kiểm kê, tra cứu tồn kho.
-- **Kế toán (Accountant)**: Xem báo cáo nhập – xuất – tồn, kiểm soát chi phí.
-- **Nhà cung cấp (Supplier)**: Đối tượng liên quan trong nhập kho.
-- **Khách hàng (Customer)**: Đối tượng liên quan trong xuất kho.
+- **Admin (Quản trị viên)**: Toàn quyền quản lý hệ thống, phân quyền, báo cáo
+- **Staff (Nhân viên kho)**: Nhập kho, xuất kho, kiểm kê, tra cứu tồn kho
+- **Accountant (Kế toán)**: Xem báo cáo nhập – xuất – tồn, kiểm soát chi phí
+- **Supplier (Nhà cung cấp)**: Đối tượng liên quan trong nhập kho
+- **Customer (Khách hàng)**: Đối tượng liên quan trong xuất kho
 
 ---
 
-## 2. Use Case chính
+## 2. Use Cases đã triển khai
 
-### UC01 – Quản lý sản phẩm
-**Tác nhân:** Admin, Nhân viên kho  
-**Mục tiêu:** Quản lý thông tin sản phẩm trong kho.  
+### UC01 – Đăng nhập hệ thống ✅
+**Tác nhân:** Tất cả người dùng  
+**Mục tiêu:** Xác thực và phân quyền truy cập  
 **Luồng chính:**
-1. Người dùng chọn chức năng “Quản lý sản phẩm”.
-2. Thêm/sửa/xóa sản phẩm (mã, tên, đơn vị, giá nhập, giá bán, vị trí, hạn sử dụng).
-3. Hệ thống lưu và cập nhật dữ liệu.
-4. Người dùng có thể tra cứu theo mã/tên/nhóm hàng.
+1. Người dùng nhập username/password
+2. Hệ thống xác thực thông tin
+3. Tạo JWT token và lưu localStorage
+4. Chuyển hướng đến dashboard theo role
+5. Hiển thị menu phù hợp với quyền hạn
 
 **Ngoại lệ:**
-- Nếu nhập thiếu trường bắt buộc → hệ thống báo lỗi.
+- Sai thông tin đăng nhập → hiển thị lỗi
+- Tài khoản bị khóa → thông báo liên hệ admin
 
 ---
 
-### UC02 – Nhập kho
-**Tác nhân:** Nhân viên kho, Nhà cung cấp  
-**Mục tiêu:** Ghi nhận hàng hóa nhập từ NCC.  
+### UC02 – Quản lý sản phẩm ✅
+**Tác nhân:** Admin, Staff  
+**Mục tiêu:** CRUD sản phẩm với tìm kiếm và lọc  
 **Luồng chính:**
-1. Nhân viên kho chọn “Nhập kho”.
-2. Tạo phiếu nhập: mã phiếu, ngày, NCC, danh sách sản phẩm, số lượng, đơn giá.
-3. Hệ thống kiểm tra dữ liệu.
-4. Hệ thống lưu phiếu nhập và cập nhật tồn kho.
-5. Lưu lịch sử giao dịch.
+1. Truy cập trang "Sản phẩm"
+2. Xem danh sách với pagination
+3. Tìm kiếm theo tên, SKU, trạng thái
+4. Thêm/sửa/xóa sản phẩm qua modal form
+5. Auto-generate SKU (SP0001, SP0002...)
+6. Validation dữ liệu đầu vào
+
+**Tính năng nâng cao:**
+- Real-time search với debounce
+- Filter theo trạng thái (Active/Inactive)
+- Modular components (ProductTable, ProductForm, ProductSearch)
+
+---
+
+### UC03 – Nhập kho ✅
+**Tác nhân:** Admin, Staff  
+**Mục tiêu:** Ghi nhận hàng hóa nhập từ NCC  
+**Luồng chính:**
+1. Truy cập "Kho hàng" → "Nhập kho"
+2. Chọn sản phẩm từ dropdown có search
+3. Chọn nhà cung cấp
+4. Nhập số lượng, đơn giá
+5. Tự động tính tổng giá trị
+6. Lưu phiếu nhập và cập nhật tồn kho
+7. Tạo InventoryTransaction record
+
+**Validation:**
+- Kiểm tra sản phẩm tồn tại
+- Số lượng và giá > 0
+- Nhà cung cấp bắt buộc
+
+---
+
+### UC04 – Xuất kho ✅
+**Tác nhân:** Admin, Staff  
+**Mục tiêu:** Xuất hàng cho khách hàng  
+**Luồng chính:**
+1. Truy cập "Kho hàng" → "Xuất kho"
+2. Chọn sản phẩm và nhập số lượng
+3. Hệ thống kiểm tra tồn kho
+4. Nhập thông tin khách hàng
+5. Tạo phiếu xuất và trừ tồn kho
+6. Ghi lại transaction history
 
 **Ngoại lệ:**
-- Sản phẩm chưa tồn tại → yêu cầu thêm mới trước.
-- Nhập dữ liệu sai định dạng → cảnh báo.
+- Không đủ tồn kho → cảnh báo và không cho xuất
+- Hiển thị số lượng tồn hiện tại
 
 ---
 
-### UC03 – Xuất kho
-**Tác nhân:** Nhân viên kho, Khách hàng  
-**Mục tiêu:** Xuất hàng cho đơn hàng hoặc yêu cầu nội bộ.  
+### UC05 – Quản lý tồn kho ✅
+**Tác nhân:** Tất cả roles  
+**Mục tiêu:** Theo dõi tồn kho real-time  
 **Luồng chính:**
-1. Nhân viên chọn “Xuất kho”.
-2. Tạo phiếu xuất: mã phiếu, ngày, sản phẩm, số lượng, khách hàng/đơn hàng.
-3. Hệ thống kiểm tra tồn kho.
-4. Nếu đủ → tạo phiếu xuất, trừ tồn, lưu lịch sử.
-5. Cập nhật trạng thái đơn hàng.
+1. Truy cập "Kho hàng" → "Tồn kho"
+2. Xem danh sách sản phẩm và số lượng tồn
+3. Tìm kiếm theo tên, SKU
+4. Xem cảnh báo tồn thấp (≤ 10)
+5. Xem cảnh báo hàng sắp hết hạn (30 ngày)
+6. Dashboard statistics tổng quan
 
-**Ngoại lệ:**
-- Nếu tồn kho không đủ → cảnh báo “thiếu hàng”.
-- Nếu đơn hàng bị hủy → không cho xuất.
+**Tính năng:**
+- Real-time inventory updates
+- Color-coded warnings
+- Detailed product information
 
 ---
 
-### UC04 – Quản lý tồn kho
-**Tác nhân:** Nhân viên kho, Quản lý  
-**Mục tiêu:** Tra cứu và theo dõi tồn kho.  
+### UC06 – Kiểm kê kho ✅
+**Tác nhân:** Admin, Staff (tạo), Admin (duyệt)  
+**Mục tiêu:** Đối chiếu tồn kho thực tế với hệ thống  
 **Luồng chính:**
-1. Người dùng chọn “Xem tồn kho”.
-2. Hệ thống hiển thị danh sách sản phẩm và số lượng tồn.
-3. Người dùng có thể lọc theo mã, tên, vị trí, lô.
-4. Hệ thống hiển thị cảnh báo tồn thấp, hàng sắp hết hạn.
+1. Staff tạo phiếu kiểm kê
+2. Chọn sản phẩm → tự động hiển thị số lượng hệ thống
+3. Nhập số lượng thực tế
+4. Hệ thống tính chênh lệch tự động
+5. Lưu phiếu với status "Pending"
+6. Admin duyệt/từ chối phiếu
+7. Khi duyệt → tự động cập nhật tồn kho và tạo adjustment transaction
 
-**Ngoại lệ:**
-- Nếu dữ liệu tồn không khớp → yêu cầu kiểm kê.
+**Workflow:**
+- Pending → Approved/Rejected
+- Chỉ Admin mới thấy nút Duyệt/Từ chối
+- Auto-generate checkId (SC000001)
 
 ---
 
-### UC05 – Kiểm kê kho
-**Tác nhân:** Nhân viên kho, Quản lý  
-**Mục tiêu:** Đối chiếu tồn kho thực tế với hệ thống.  
+### UC07 – Báo cáo & Thống kê ✅
+**Tác nhân:** Admin, Accountant  
+**Mục tiêu:** Theo dõi tình hình kho và xuất báo cáo  
 **Luồng chính:**
-1. Nhân viên kho chọn “Kiểm kê”.
-2. Nhập số lượng thực tế từng sản phẩm.
-3. Hệ thống so sánh với dữ liệu hệ thống.
-4. Nếu khớp → tạo biên bản kiểm kê.
-5. Nếu lệch → tạo biên bản chênh lệch, gửi quản lý duyệt.
-6. Quản lý duyệt → hệ thống điều chỉnh tồn kho.
+1. Truy cập trang "Báo cáo"
+2. Chọn loại báo cáo (Tồn kho, Giao dịch, Hàng sắp hết, Hàng hết hạn)
+3. Chọn khoảng thời gian
+4. Tìm kiếm trong dữ liệu báo cáo
+5. Xem online hoặc export Excel/PDF
+6. Dashboard với thống kê tổng quan
 
-**Ngoại lệ:**
-- Nếu nhân viên không có quyền → không thể điều chỉnh.
-
----
-
-### UC06 – Báo cáo & Thống kê
-**Tác nhân:** Admin, Kế toán  
-**Mục tiêu:** Theo dõi tình hình kho.  
-**Luồng chính:**
-1. Người dùng chọn “Báo cáo”.
-2. Hệ thống tạo báo cáo nhập – xuất – tồn, hàng sắp hết, hàng hết hạn, giá trị hàng tồn.
-3. Người dùng có thể xem online hoặc export PDF/Excel.
-
-**Ngoại lệ:**
-- Nếu không có dữ liệu phù hợp → thông báo “không có dữ liệu”.
+**Loại báo cáo:**
+- Inventory Report: Tồn kho hiện tại
+- Transaction Report: Lịch sử nhập/xuất
+- Low Stock Report: Hàng sắp hết
+- Expiring Report: Hàng sắp hết hạn
 
 ---
 
-### UC07 – Quản trị hệ thống
+### UC08 – Quản lý nhà cung cấp ✅
 **Tác nhân:** Admin  
-**Mục tiêu:** Quản lý người dùng, phân quyền.  
+**Mục tiêu:** CRUD nhà cung cấp  
 **Luồng chính:**
-1. Admin chọn “Quản trị hệ thống”.
-2. Thêm/sửa/xóa tài khoản người dùng.
-3. Gán vai trò (Admin, Nhân viên kho, Kế toán).
-4. Hệ thống lưu thông tin và cập nhật phân quyền.
+1. Truy cập "Nhà cung cấp"
+2. Xem danh sách với tìm kiếm
+3. Thêm/sửa/xóa nhà cung cấp
+4. Quản lý trạng thái (Active/Inactive)
+5. Auto-generate supplier code
 
-**Ngoại lệ:**
-- Không được phép xóa tài khoản Admin cuối cùng.
+**Tính năng:**
+- Search theo tên, liên hệ, địa chỉ
+- Filter theo trạng thái
+- Validation email, phone format
+
+---
+
+### UC09 – Quản trị người dùng ✅
+**Tác nhân:** Admin  
+**Mục tiêu:** Quản lý tài khoản và phân quyền  
+**Luồng chính:**
+1. Truy cập "Người dùng"
+2. Xem danh sách user với role
+3. Thêm/sửa/xóa tài khoản
+4. Gán role (Admin/Staff/Accountant)
+5. Quản lý trạng thái active/inactive
+6. Auto-generate employee code (NV0001)
+
+**Phân quyền:**
+- Admin: Full access
+- Staff: Inventory operations only
+- Accountant: Reports và inventory view only
 
 ---
 
-## 3. Tổng hợp luồng dữ liệu
-- **Nhập kho** → Cập nhật tồn kho → Ghi lịch sử → Báo cáo.  
-- **Xuất kho** → Cập nhật tồn kho → Ghi lịch sử → Báo cáo.  
-- **Kiểm kê** → So sánh số liệu → Điều chỉnh tồn kho → Báo cáo.  
-- **Quản lý sản phẩm** → Cập nhật thông tin sản phẩm → Áp dụng cho nhập/xuất.  
+### UC10 – Quản lý thông tin cá nhân ✅
+**Tác nhân:** Tất cả người dùng  
+**Mục tiêu:** Cập nhật thông tin cá nhân  
+**Luồng chính:**
+1. Click avatar → "Thông tin cá nhân"
+2. Xem thông tin hiện tại từ API
+3. Cập nhật họ tên, email, số điện thoại
+4. Đổi mật khẩu (optional)
+5. Lưu thông tin với validation
+
+**Tính năng:**
+- Load data từ API thay vì localStorage
+- Real-time validation
+- Password strength check
 
 ---
+
+## 3. Luồng dữ liệu chính
+
+### 3.1. Inventory Flow
+```
+Nhập kho → InventoryTransaction (Import) → Update InventoryBalance → Dashboard Stats
+Xuất kho → InventoryTransaction (Export) → Update InventoryBalance → Dashboard Stats
+Kiểm kê → StockCheck (Approved) → InventoryTransaction (Adjustment) → Update InventoryBalance
+```
+
+### 3.2. User Management Flow
+```
+Login → JWT Token → Role-based Menu → Protected Routes → API Authorization
+Profile Update → API Call → Database Update → UI Refresh
+```
+
+### 3.3. Search & Filter Flow
+```
+User Input → Debounced Search → Filter Data → Update UI → Pagination
+Real-time → No API Call → Client-side Filtering → Instant Results
+```
+
+---
+
+## 4. Tính năng nâng cao đã triển khai
+
+### 4.1. Modular Architecture
+- Tách components, hooks, utils cho mỗi module
+- Reusable components (Table, Form, Search, Modal)
+- Custom hooks cho state management
+- Consistent code structure
+
+### 4.2. User Experience
+- Real-time search với debounce
+- Loading states và error handling
+- Confirmation dialogs cho actions quan trọng
+- Responsive design
+- Form validation với feedback
+
+### 4.3. Performance Optimization
+- Pagination cho large datasets
+- Debounced search inputs
+- Optimized MongoDB queries
+- Client-side filtering khi có thể
+
+### 4.4. Security Features
+- JWT authentication
+- Role-based access control
+- Protected API routes
+- Input validation và sanitization
+- Password hashing với bcrypt
+
+---
+
+## 5. Integration Points
+
+### 5.1. Frontend-Backend Integration
+- RESTful API với consistent response format
+- Error handling với user-friendly messages
+- File upload cho future features
+- Real-time updates potential
+
+### 5.2. Database Integration
+- MongoDB với Mongoose ODM
+- Auto-generated IDs và codes
+- Relationship management với populate
+- Transaction consistency
+
+---
+
+## 6. Future Enhancements
+
+### 6.1. Planned Features
+- Barcode/QR code integration
+- Mobile app cho warehouse staff
+- Real-time notifications
+- Advanced analytics dashboard
+- Multi-warehouse support
+
+### 6.2. Technical Improvements
+- WebSocket cho real-time updates
+- Redis caching layer
+- Microservices architecture
+- Docker containerization
+- CI/CD pipeline

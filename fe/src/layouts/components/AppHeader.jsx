@@ -1,0 +1,63 @@
+import React from 'react';
+import { Layout, Button, Dropdown, Avatar, Menu } from 'antd';
+import { 
+  MenuFoldOutlined, 
+  MenuUnfoldOutlined, 
+  UserOutlined, 
+  LogoutOutlined 
+} from '@ant-design/icons';
+
+const { Header } = Layout;
+
+const AppHeader = ({ collapsed, onToggle, currentUser, userRole, onLogout, onProfile }) => {
+  const userMenu = (
+    <Menu items={[
+      { key: 'profile', label: 'Thông tin cá nhân', onClick: onProfile },
+      { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, onClick: onLogout }
+    ]} />
+  );
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'Admin': return 'Quản trị viên';
+      case 'Staff': return 'Nhân viên';
+      case 'Accountant': return 'Kế toán';
+      default: return role;
+    }
+  };
+
+  return (
+    <Header style={{ 
+      padding: '0 16px', 
+      background: '#fff', 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center' 
+    }}>
+      <Button
+        type="text"
+        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        onClick={onToggle}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontWeight: '500', fontSize: '14px', lineHeight: '20px' }}>
+            {currentUser?.fullName || currentUser?.FullName || 'Người dùng'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#666', lineHeight: '16px' }}>
+            {getRoleLabel(userRole)}
+          </div>
+        </div>
+        <Dropdown overlay={userMenu} placement="bottomRight">
+          <Avatar 
+            src={currentUser?.avatar ? `http://localhost:3000${currentUser.avatar}` : null}
+            icon={<UserOutlined />} 
+            style={{ cursor: 'pointer' }} 
+          />
+        </Dropdown>
+      </div>
+    </Header>
+  );
+};
+
+export default AppHeader;

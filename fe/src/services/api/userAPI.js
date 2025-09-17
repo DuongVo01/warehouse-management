@@ -47,6 +47,16 @@ const userAPI = {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
+  },
+
+  // Upload avatar
+  uploadAvatar: (formData) => {
+    return axios.post(`${API_BASE_URL}/users/avatar`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
   }
 };
 

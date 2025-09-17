@@ -134,11 +134,53 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Upload avatar
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Không có file được upload' 
+      });
+    }
+
+    const userId = req.user._id;
+    const avatarPath = `/uploads/avatars/${req.file.filename}`;
+
+    // Cập nhật avatar trong database
+    const user = await User.findByIdAndUpdate(
+      userId, 
+      { avatar: avatarPath }, 
+      { new: true }
+    ).select('-passwordHash');
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: { avatar: avatarPath },
+      message: 'Upload avatar thành công'
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
 module.exports = {
   createUser,
   updateUser,
   deleteUser,
   getAllUsers,
   getUserById,
-  updateProfile
+  updateProfile,
+  uploadAvatar
 };

@@ -26,6 +26,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
+// Static files - serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api', routes);
 

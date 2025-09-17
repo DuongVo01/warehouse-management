@@ -1,124 +1,343 @@
 # Database Design – Hệ thống Quản lý Kho hàng
 
-## 1. Nguyên tắc thiết kế
-- Dữ liệu quan hệ, chuẩn hóa (3NF) để tránh trùng lặp.  
-- Mỗi bảng có khóa chính (Primary Key).  
-- Khóa ngoại (Foreign Key) để ràng buộc quan hệ.  
-- Lưu lịch sử thay đổi (audit) qua bảng giao dịch.  
+## 1. Công nghệ Database
+- **Database**: MongoDB (NoSQL Document Database)
+- **ODM**: Mongoose cho Node.js
+- **Hosting**: Local MongoDB instance
+- **Connection**: MongoDB connection string với authentication
 
 ---
 
-## 2. Danh sách bảng dữ liệu chính
+## 2. Collections (Tương đương Tables trong SQL)
 
-### 2.1. Bảng Users (Người dùng)
-| Trường        | Kiểu dữ liệu   | Mô tả                           |
-|---------------|----------------|---------------------------------|
-| UserID (PK)   | INT, AUTO      | Mã người dùng                   |
-| Username      | VARCHAR(50)    | Tên đăng nhập                   |
-| PasswordHash  | VARCHAR(255)   | Mật khẩu (hash)                 |
-| FullName      | VARCHAR(100)   | Họ và tên                       |
-| Role          | ENUM(Admin, Staff, Accountant) | Vai trò |
-| Email         | VARCHAR(100)   | Email                           |
-| Phone         | VARCHAR(20)    | Số điện thoại                   |
-| CreatedAt     | DATETIME       | Ngày tạo                        |
-| IsActive      | BOOLEAN        | Trạng thái hoạt động            |
+### 2.1. Users Collection
+```javascript
+{
+  _id: ObjectId,
+  username: String (required, unique),
+  employeeCode: String (required, unique), // Auto-generated: NV0001
+  passwordHash: String (required),
+  fullName: String (required),
+  role: String (enum: ['Admin', 'Staff', 'Accountant']),
+  email: String (required, unique, lowercase),
+  phone: String (optional),
+  isActive: Boolean (default: true),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
----
+### 2.2. Products Collection
+```javascript
+{
+  _id: ObjectId,
+  sku: String (required, unique), // Auto-generated: SP0001
+  name: String (required),
+  unit: String (required), // cái, hộp, thùng, kg, etc.
+  costPrice: Number (required),
+  salePrice: Number (required),
+  expiryDate: Date (optional),
+  location: String (optional), // Vị trí kệ
+  isActive: Boolean (default: true),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
-### 2.2. Bảng Suppliers (Nhà cung cấp)
-| Trường        | Kiểu dữ liệu   | Mô tả                |
-|---------------|----------------|----------------------|
-| SupplierID(PK)| INT, AUTO      | Mã nhà cung cấp      |
-| Name          | VARCHAR(100)   | Tên nhà cung cấp     |
-| Address       | VARCHAR(255)   | Địa chỉ              |
-| Phone         | VARCHAR(20)    | SĐT                  |
-| Email         | VARCHAR(100)   | Email                |
-| TaxCode       | VARCHAR(50)    | Mã số thuế           |
-| CreatedAt     | DATETIME       | Ngày thêm            |
+### 2.3. Suppliers Collection
+```javascript
+{
+  _id: ObjectId,
+  supplierCode: String (required, unique), // Auto-generated
+  name: String (required),
+  address: String (optional),
+  phone: String (optional),
+  email: String (optional),
+  taxCode: String (optional),
+  isActive: Boolean (default: true),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
----
+### 2.4. InventoryTransactions Collection
+```javascript
+{
+  _id: ObjectId,
+  productId: ObjectId (ref: 'Product', required),
+  transactionType: String (enum: ['Import', 'Export', 'Adjustment_In', 'Adjustment_Out']),
+  quantity: Number (required), // Positive for import, negative for export
+  unitPrice: Number (optional),
+  supplierId: ObjectId (ref: 'Supplier', optional), // For imports
+  customerInfo: String (optional), // For exports
+  note: String (optional),
+  createdBy: ObjectId (ref: 'User', required),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
-### 2.3. Bảng Products (Sản phẩm)
-| Trường         | Kiểu dữ liệu   | Mô tả                           |
-|----------------|----------------|---------------------------------|
-| ProductID (PK) | INT, AUTO      | Mã sản phẩm                     |
-| SKU            | VARCHAR(50)    | Mã hàng (Stock Keeping Unit)    |
-| Name           | VARCHAR(150)   | Tên sản phẩm                    |
-| Unit           | VARCHAR(20)    | Đơn vị tính (cái, hộp, thùng)   |
-| CostPrice      | DECIMAL(18,2)  | Giá nhập                        |
-| SalePrice      | DECIMAL(18,2)  | Giá bán                         |
-| ExpiryDate     | DATE, NULLABLE | Hạn sử dụng (nếu có)            |
-| Location       | VARCHAR(50)    | Vị trí kệ trong kho             |
-| CreatedAt      | DATETIME       | Ngày thêm                       |
-| IsActive       | BOOLEAN        | Trạng thái sản phẩm             |
+### 2.5. InventoryBalance Collection
+```javascript
+{
+  _id: ObjectId,
+  productId: ObjectId (ref: 'Product', required, unique),
+  quantity: Number (required, default: 0),
+  lastUpdated: Date (required),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
----
-
-### 2.4. Bảng InventoryTransactions (Giao dịch tồn kho)
-| Trường              | Kiểu dữ liệu   | Mô tả                                        |
-|---------------------|----------------|----------------------------------------------|
-| TransactionID (PK)  | INT, AUTO      | Mã giao dịch tồn kho                         |
-| ProductID (FK)      | INT            | Sản phẩm liên quan                           |
-| TransactionType     | ENUM(Import, Export, Adjust) | Loại giao dịch (Nhập, Xuất, Điều chỉnh) |
-| Quantity            | INT            | Số lượng thay đổi                            |
-| UnitPrice           | DECIMAL(18,2)  | Giá trị đơn vị (nếu có)                      |
-| SupplierID (FK)     | INT, NULLABLE  | Nhà cung cấp (cho nhập kho)                  |
-| CustomerInfo        | VARCHAR(255)   | Thông tin khách (cho xuất kho)               |
-| Note                | VARCHAR(255)   | Ghi chú giao dịch                            |
-| CreatedBy (FK)      | INT            | Người thao tác                               |
-| CreatedAt           | DATETIME       | Thời điểm giao dịch                          |
-
----
-
-### 2.5. Bảng InventoryBalance (Số dư tồn kho)
-| Trường        | Kiểu dữ liệu   | Mô tả                           |
-|---------------|----------------|---------------------------------|
-| ProductID(PK,FK)| INT          | Sản phẩm                        |
-| Quantity       | INT            | Số lượng tồn hiện tại           |
-| LastUpdated    | DATETIME       | Ngày cập nhật gần nhất          |
-
-> Ghi chú: Bảng này lưu **số lượng hiện tại**, được cập nhật tự động sau mỗi giao dịch từ `InventoryTransactions`.
-
----
-
-### 2.6. Bảng StockCheck (Kiểm kê kho)
-| Trường        | Kiểu dữ liệu   | Mô tả                           |
-|---------------|----------------|---------------------------------|
-| StockCheckID(PK)| INT, AUTO    | Mã phiếu kiểm kê                |
-| ProductID(FK) | INT            | Sản phẩm                        |
-| SystemQty     | INT            | Số lượng theo hệ thống          |
-| ActualQty     | INT            | Số lượng kiểm kê thực tế        |
-| Difference    | INT            | Chênh lệch                      |
-| CreatedBy(FK) | INT            | Người lập phiếu kiểm kê         |
-| CreatedAt     | DATETIME       | Ngày kiểm kê                    |
-| ApprovedBy(FK)| INT, NULLABLE  | Quản lý duyệt                   |
-| Status        | ENUM(Pending, Approved, Rejected) | Trạng thái |
-
----
-
-### 2.7. Bảng Reports (Lưu báo cáo xuất/nhập/tồn)
-| Trường         | Kiểu dữ liệu   | Mô tả                           |
-|----------------|----------------|---------------------------------|
-| ReportID (PK)  | INT, AUTO      | Mã báo cáo                      |
-| ReportType     | ENUM(Import, Export, Inventory, Expiry, LowStock) | Loại báo cáo |
-| FilePath       | VARCHAR(255)   | Đường dẫn file (Excel/PDF)      |
-| CreatedBy (FK) | INT            | Người tạo báo cáo               |
-| CreatedAt      | DATETIME       | Ngày tạo                        |
-
----
-
-## 3. Quan hệ giữa các bảng
-- **Users** (1 - n) → **InventoryTransactions**, **StockCheck**, **Reports**  
-- **Suppliers** (1 - n) → **InventoryTransactions** (cho nhập kho)  
-- **Products** (1 - n) → **InventoryTransactions**, **StockCheck**, **InventoryBalance**  
+### 2.6. StockChecks Collection
+```javascript
+{
+  _id: ObjectId,
+  checkId: String (unique), // Auto-generated: SC000001
+  productId: ObjectId (ref: 'Product', required),
+  systemQuantity: Number (required), // Auto-filled from InventoryBalance
+  actualQuantity: Number (required), // User input
+  difference: Number (calculated: actualQuantity - systemQuantity),
+  status: String (enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending'),
+  note: String (optional),
+  createdBy: ObjectId (ref: 'User', required),
+  approvedBy: ObjectId (ref: 'User', optional),
+  approvedAt: Date (optional),
+  createdAt: Date (auto),
+  updatedAt: Date (auto)
+}
+```
 
 ---
 
-## 4. Ghi chú thiết kế
-- Các trường `CreatedAt` lưu theo UTC để đồng bộ.  
-- Có thể bổ sung bảng **Customers** nếu quản lý xuất kho cho khách hàng chi tiết.  
-- Tích hợp trigger DB để:
-  - Sau khi nhập/xuất (`InventoryTransactions`) → update tồn (`InventoryBalance`).  
-  - Khi kiểm kê Approved → update tồn.  
+## 3. Relationships & Population
+
+### 3.1. Reference Relationships
+- **Users** → **InventoryTransactions** (createdBy)
+- **Users** → **StockChecks** (createdBy, approvedBy)
+- **Products** → **InventoryTransactions** (productId)
+- **Products** → **InventoryBalance** (productId)
+- **Products** → **StockChecks** (productId)
+- **Suppliers** → **InventoryTransactions** (supplierId)
+
+### 3.2. Population Examples
+```javascript
+// Get transactions with product and user info
+InventoryTransaction.find()
+  .populate('productId', 'sku name unit')
+  .populate('supplierId', 'name')
+  .populate('createdBy', 'fullName employeeCode')
+
+// Get stock checks with related data
+StockCheck.find()
+  .populate('productId', 'sku name unit')
+  .populate('createdBy', 'fullName employeeCode')
+  .populate('approvedBy', 'fullName employeeCode')
+```
 
 ---
+
+## 4. Indexes for Performance
+
+### 4.1. Unique Indexes
+- `users.username`
+- `users.email`
+- `users.employeeCode`
+- `products.sku`
+- `suppliers.supplierCode`
+- `stockchecks.checkId`
+- `inventorybalance.productId`
+
+### 4.2. Compound Indexes
+```javascript
+// For transaction queries
+{ productId: 1, createdAt: -1 }
+{ transactionType: 1, createdAt: -1 }
+{ createdBy: 1, createdAt: -1 }
+
+// For stock check queries
+{ status: 1, createdAt: -1 }
+{ productId: 1, status: 1 }
+```
+
+---
+
+## 5. Data Validation & Constraints
+
+### 5.1. Mongoose Schema Validation
+```javascript
+// Example: Product schema validation
+const productSchema = new mongoose.Schema({
+  sku: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 200
+  },
+  costPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+});
+```
+
+### 5.2. Pre-save Hooks
+```javascript
+// Auto-generate SKU
+productSchema.pre('save', async function(next) {
+  if (!this.sku) {
+    const count = await this.constructor.countDocuments();
+    this.sku = `SP${String(count + 1).padStart(4, '0')}`;
+  }
+  next();
+});
+
+// Calculate difference in StockCheck
+stockCheckSchema.pre('save', function(next) {
+  this.difference = this.actualQuantity - this.systemQuantity;
+  next();
+});
+```
+
+---
+
+## 6. Business Logic Implementation
+
+### 6.1. Inventory Balance Updates
+```javascript
+// Helper function to update inventory balance
+const updateInventoryBalance = async (productId, quantityChange) => {
+  const balance = await InventoryBalance.findOne({ productId });
+  
+  if (balance) {
+    balance.quantity += quantityChange;
+    balance.lastUpdated = new Date();
+    await balance.save();
+  } else {
+    await InventoryBalance.create({
+      productId,
+      quantity: Math.max(0, quantityChange),
+      lastUpdated: new Date()
+    });
+  }
+};
+```
+
+### 6.2. Stock Check Approval Process
+```javascript
+// When stock check is approved
+const approveStockCheck = async (stockCheckId, userId) => {
+  const stockCheck = await StockCheck.findById(stockCheckId);
+  
+  // Update stock check status
+  stockCheck.status = 'Approved';
+  stockCheck.approvedBy = userId;
+  stockCheck.approvedAt = new Date();
+  await stockCheck.save();
+  
+  // Update inventory balance
+  const difference = stockCheck.actualQuantity - stockCheck.systemQuantity;
+  if (difference !== 0) {
+    await updateInventoryBalance(stockCheck.productId, difference);
+    
+    // Create adjustment transaction
+    await InventoryTransaction.create({
+      productId: stockCheck.productId,
+      transactionType: difference > 0 ? 'Adjustment_In' : 'Adjustment_Out',
+      quantity: Math.abs(difference),
+      note: `Điều chỉnh từ kiểm kê ${stockCheck.checkId}`,
+      createdBy: userId
+    });
+  }
+};
+```
+
+---
+
+## 7. Query Patterns
+
+### 7.1. Common Queries
+```javascript
+// Get low stock products
+InventoryBalance.find({ quantity: { $lte: 10 } })
+  .populate('productId', 'sku name unit');
+
+// Get expiring products (next 30 days)
+const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
+Product.find({ 
+  expiryDate: { $lte: thirtyDaysFromNow },
+  isActive: true 
+});
+
+// Get transactions by date range
+InventoryTransaction.find({
+  createdAt: {
+    $gte: startDate,
+    $lte: endDate
+  }
+}).populate('productId supplierId createdBy');
+```
+
+### 7.2. Aggregation Pipelines
+```javascript
+// Calculate total inventory value
+InventoryBalance.aggregate([
+  {
+    $lookup: {
+      from: 'products',
+      localField: 'productId',
+      foreignField: '_id',
+      as: 'product'
+    }
+  },
+  {
+    $unwind: '$product'
+  },
+  {
+    $group: {
+      _id: null,
+      totalValue: {
+        $sum: { $multiply: ['$quantity', '$product.costPrice'] }
+      }
+    }
+  }
+]);
+```
+
+---
+
+## 8. Backup & Recovery Strategy
+
+### 8.1. Regular Backups
+- Daily automated backups using `mongodump`
+- Weekly full database exports
+- Transaction log backups for point-in-time recovery
+
+### 8.2. Data Integrity
+- Regular validation scripts
+- Consistency checks between InventoryBalance and InventoryTransactions
+- Audit trails for all critical operations
+
+---
+
+## 9. Performance Considerations
+
+### 9.1. Optimization Techniques
+- Proper indexing on frequently queried fields
+- Pagination for large datasets
+- Lean queries when full documents not needed
+- Connection pooling for concurrent requests
+
+### 9.2. Monitoring
+- Query performance monitoring
+- Index usage statistics
+- Database size and growth tracking
+- Connection pool metrics

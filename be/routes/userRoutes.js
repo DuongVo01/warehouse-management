@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
 const role = require('../middleware/role');
+const upload = require('../middleware/upload');
 
 // API danh sách người dùng
 router.get('/', auth, role(['Admin']), userController.getAllUsers);
@@ -18,6 +19,9 @@ router.put('/:id', auth, role(['Admin']), userController.updateUser);
 
 // API cập nhật profile cá nhân
 router.put('/:id/profile', auth, userController.updateProfile);
+
+// API upload avatar
+router.post('/avatar', auth, upload.single('avatar'), userController.uploadAvatar);
 
 // API xóa người dùng
 router.delete('/:id', auth, role(['Admin']), userController.deleteUser);
