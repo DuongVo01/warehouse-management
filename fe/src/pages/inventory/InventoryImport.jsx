@@ -1,134 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, InputNumber, Button, Table, Space, DatePicker, message } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { inventoryAPI } from '../../services/api/inventoryAPI';
-import { productAPI } from '../../services/api/productAPI';
-import { supplierAPI } from '../../services/api/supplierAPI';
-import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { Form, Input, message } from 'antd';
+import { useInventory } from './hooks/useInventory';
+import { useInventoryItems } from './hooks/useInventoryItems';
+import { useProducts } from './hooks/useProducts';
+import { useSuppliers } from './hooks/useSuppliers';
+import ProductSelector from './components/ProductSelector';
+import InventoryTable from './components/InventoryTable';
+import SupplierSelector from './components/SupplierSelector';
+import ImportSummary from './components/ImportSummary';
+import { validateInventoryForm, prepareInventoryData } from './utils/inventoryHelpers';
 
 const InventoryImport = () => {
   const [form] = Form.useForm();
-  const [items, setItems] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, setLoading, importInventory } = useInventory();
+  const { products } = useProducts();
+  const { suppliers } = useSuppliers();
+  const { items, addItem, removeItem, clearItems } = useInventoryItems(products);
 
-  useEffect(() => {
-    loadProducts();
-    loadSuppliers();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const response = await productAPI.getProducts({ limit: 100 });
-      if (response.data.success) {
-        const activeProducts = response.data.data.filter(p => p.isActive !== false);
-        setProducts(activeProducts);
-      }
-    } catch (error) {
-      message.error('Lỗi tải danh sách sản phẩm');
+  const handleAddItem = (values) => {
+    const success = addItem(values, false); // false for import
+    if (success) {
+      form.resetFields(['productId', 'quantity', 'unitPrice']);
     }
-  };
-
-  const loadSuppliers = async () => {
-    try {
-      const response = await supplierAPI.getSuppliers();
-      if (response.data.success) {
-        setSuppliers(response.data.data || []);
-      }
-    } catch (error) {
-      console.error('Error loading suppliers:', error);
-      message.error('Lỗi tải danh sách nhà cung cấp');
-    }
-  };
-
-  const columns = [
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
-    { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity' },
-    { title: 'Đơn giá', dataIndex: 'unitPrice', key: 'unitPrice', render: (value) => `${value?.toLocaleString()} đ` },
-    { title: 'Thành tiền', key: 'total', render: (_, record) => `${(record.quantity * record.unitPrice)?.toLocaleString()} đ` },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      render: (_, record, index) => (
-        <Button 
-          icon={<DeleteOutlined />} 
-          size="small" 
-          danger 
-          onClick={() => removeItem(index)}
-        >
-          Xóa
-        </Button>
-      )
-    }
-  ];
-
-  const addItem = (values) => {
-    const product = products.find(p => p._id === values.productId);
-    if (!product) {
-      message.error('Vui lòng chọn sản phẩm');
-      return;
-    }
-    
-    // Kiểm tra sản phẩm đã có trong danh sách chưa
-    const existingIndex = items.findIndex(item => item.productId === values.productId);
-    if (existingIndex >= 0) {
-      // Cập nhật số lượng nếu đã có
-      const updatedItems = [...items];
-      updatedItems[existingIndex].quantity += values.quantity;
-      setItems(updatedItems);
-    } else {
-      // Thêm mới
-      const newItem = {
-        productId: values.productId,
-        productName: `${product.sku} - ${product.name}`,
-        quantity: values.quantity,
-        unitPrice: values.unitPrice
-      };
-      setItems([...items, newItem]);
-    }
-    
-    form.resetFields(['productId', 'quantity', 'unitPrice']);
-  };
-
-  const removeItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
   };
 
   const onFinish = async (values) => {
-    if (items.length === 0) {
-      message.error('Vui lòng thêm ít nhất một sản phẩm');
+    const validationError = validateInventoryForm(items, values, false);
+    if (validationError) {
+      message.error(validationError);
       return;
     }
 
     setLoading(true);
     try {
-      // Gọi API cho từng sản phẩm
-      for (const item of items) {
-        const importData = {
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          supplierId: values.supplierId,
-          note: values.note || 'Nhập kho'
-        };
-        
-        await inventoryAPI.importInventory(importData);
+      const importItems = prepareInventoryData(items, values, false);
+      
+      for (const importData of importItems) {
+        const success = await importInventory(importData);
+        if (!success) {
+          setLoading(false);
+          return;
+        }
       }
       
       message.success(`Nhập kho thành công ${items.length} sản phẩm`);
       form.resetFields();
-      setItems([]);
-    } catch (error) {
-      console.error('Import error:', error);
-      if (error.response?.status === 401) {
-        message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
-      } else {
-        message.error(`Lỗi nhập kho: ${error.response?.data?.message || error.message}`);
-      }
+      clearItems();
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    clearItems();
   };
 
   return (
@@ -138,91 +63,31 @@ const InventoryImport = () => {
       </div>
 
       <Form form={form} layout="vertical" onFinish={onFinish}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          <Form.Item name="supplierId" label="Nhà cung cấp" rules={[{ required: true }]}>
-            <Select 
-              placeholder="Chọn nhà cung cấp"
-              showSearch
-              filterOption={(input, option) => {
-                const supplier = suppliers.find(s => s._id === option.value);
-                if (supplier) {
-                  const searchText = `${supplier.supplierCode} ${supplier.name}`.toLowerCase();
-                  return searchText.includes(input.toLowerCase());
-                }
-                return false;
-              }}
-            >
-              {suppliers.map(supplier => (
-                <Select.Option key={supplier._id} value={supplier._id}>
-                  {supplier.supplierCode} - {supplier.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="importDate" label="Ngày nhập" initialValue={dayjs()}>
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-        </div>
+        <SupplierSelector suppliers={suppliers} />
 
-        <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-          <h4>Thêm sản phẩm</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '16px', alignItems: 'end' }}>
-            <Form.Item name="productId" label="Sản phẩm">
-              <Select 
-                placeholder="Chọn sản phẩm" 
-                showSearch
-                filterOption={(input, option) => {
-                  const product = products.find(p => p._id === option.value);
-                  if (product) {
-                    const searchText = `${product.sku} ${product.name}`.toLowerCase();
-                    return searchText.includes(input.toLowerCase());
-                  }
-                  return false;
-                }}
-              >
-                {products.map(product => (
-                  <Select.Option key={product._id} value={product._id}>
-                    {product.sku} - {product.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="quantity" label="Số lượng">
-              <InputNumber min={1} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item name="unitPrice" label="Đơn giá">
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => form.validateFields(['productId', 'quantity', 'unitPrice']).then(addItem)}>
-              Thêm
-            </Button>
-          </div>
-        </div>
+        <ProductSelector 
+          products={products}
+          onAdd={handleAddItem}
+          form={form}
+          showUnitPrice={true}
+          isExport={false}
+        />
 
-        <Table
-          columns={columns}
-          dataSource={items}
-          pagination={false}
-          style={{ marginBottom: '24px' }}
+        <InventoryTable 
+          items={items}
+          onRemove={removeItem}
+          showUnitPrice={true}
         />
 
         <Form.Item name="note" label="Ghi chú">
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <div style={{ textAlign: 'right', marginTop: '16px', padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
-          <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 'bold' }}>
-            Tổng tiền: {items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toLocaleString()} đ
-          </div>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              Lưu phiếu nhập
-            </Button>
-            <Button onClick={() => { form.resetFields(); setItems([]); }} disabled={loading}>
-              Hủy
-            </Button>
-          </Space>
-        </div>
+        <ImportSummary 
+          items={items}
+          loading={loading}
+          onCancel={handleCancel}
+        />
       </Form>
     </div>
   );

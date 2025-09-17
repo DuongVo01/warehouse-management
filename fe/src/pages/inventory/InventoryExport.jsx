@@ -1,125 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, Table, Space, DatePicker, message, Select } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { inventoryAPI } from '../../services/api/inventoryAPI';
+import React, { useState } from 'react';
+import { Form, Input, Button, Space, DatePicker, message } from 'antd';
 import dayjs from 'dayjs';
+import { useInventory } from './hooks/useInventory';
+import { useInventoryItems } from './hooks/useInventoryItems';
+import ProductSelector from './components/ProductSelector';
+import InventoryTable from './components/InventoryTable';
+import { validateInventoryForm, prepareInventoryData } from './utils/inventoryHelpers';
 
 const InventoryExport = () => {
   const [form] = Form.useForm();
-  const [items, setItems] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { products, loading, setLoading, loadProducts, exportInventory } = useInventory();
+  const { items, addItem, removeItem, clearItems } = useInventoryItems(products);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const response = await inventoryAPI.getBalance({ limit: 100 });
-      if (response.data.success) {
-        const productsWithStock = response.data.data.filter(item => item.quantity > 0);
-        setProducts(productsWithStock);
-      }
-    } catch (error) {
-      message.error('Lỗi tải danh sách sản phẩm');
+  const handleAddItem = (values) => {
+    const success = addItem(values, true); // true for export
+    if (success) {
+      form.resetFields(['productId', 'quantity']);
     }
-  };
-
-  const columns = [
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
-    { title: 'Tồn kho', dataIndex: 'availableStock', key: 'availableStock' },
-    { title: 'Số lượng xuất', dataIndex: 'quantity', key: 'quantity' },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      render: (_, record, index) => (
-        <Button 
-          icon={<DeleteOutlined />} 
-          size="small" 
-          danger 
-          onClick={() => removeItem(index)}
-        >
-          Xóa
-        </Button>
-      )
-    }
-  ];
-
-  const addItem = (values) => {
-    const product = products.find(p => p._id === values.productId);
-    if (!product) {
-      message.error('Vui lòng chọn sản phẩm');
-      return;
-    }
-    
-    if (values.quantity > product.quantity) {
-      message.error('Số lượng xuất vượt quá tồn kho');
-      return;
-    }
-
-    // Kiểm tra sản phẩm đã có trong danh sách chưa
-    const existingIndex = items.findIndex(item => item.productId === product.productId._id);
-    if (existingIndex >= 0) {
-      const updatedItems = [...items];
-      const newQuantity = updatedItems[existingIndex].quantity + values.quantity;
-      if (newQuantity > product.quantity) {
-        message.error('Tổng số lượng xuất vượt quá tồn kho');
-        return;
-      }
-      updatedItems[existingIndex].quantity = newQuantity;
-      setItems(updatedItems);
-    } else {
-      const newItem = {
-        productId: product.productId._id, // Sử dụng productId._id thay vì balance._id
-        productName: `${product.productId?.sku} - ${product.productId?.name}`,
-        availableStock: product.quantity,
-        quantity: values.quantity
-      };
-      setItems([...items, newItem]);
-    }
-    
-    form.resetFields(['productId', 'quantity']);
-  };
-
-  const removeItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
   };
 
   const onFinish = async (values) => {
-    if (items.length === 0) {
-      message.error('Vui lòng thêm ít nhất một sản phẩm');
+    const validationError = validateInventoryForm(items, values, true);
+    if (validationError) {
+      message.error(validationError);
       return;
     }
 
     setLoading(true);
     try {
-      // Gọi API cho từng sản phẩm
-      for (const item of items) {
-        const exportData = {
-          productId: item.productId,
-          quantity: item.quantity,
-          customerInfo: values.customerInfo,
-          note: values.note || 'Xuất kho'
-        };
-        
-        await inventoryAPI.exportInventory(exportData);
+      const exportItems = prepareInventoryData(items, values, true);
+      
+      for (const exportData of exportItems) {
+        const success = await exportInventory(exportData);
+        if (!success) {
+          setLoading(false);
+          return;
+        }
       }
       
       message.success(`Xuất kho thành công ${items.length} sản phẩm`);
       form.resetFields();
-      setItems([]);
-      loadProducts(); // Tải lại danh sách sản phẩm
-    } catch (error) {
-      console.error('Export error:', error);
-      if (error.response?.status === 401) {
-        message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
-      } else {
-        message.error(`Lỗi xuất kho: ${error.response?.data?.message || error.message}`);
-      }
+      clearItems();
+      loadProducts();
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    clearItems();
   };
 
   return (
@@ -138,43 +68,16 @@ const InventoryExport = () => {
           </Form.Item>
         </div>
 
-        <div style={{ background: '#f5f5f5', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-          <h4>Thêm sản phẩm xuất</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '16px', alignItems: 'end' }}>
-            <Form.Item name="productId" label="Sản phẩm">
-              <Select 
-                placeholder="Chọn sản phẩm"
-                showSearch
-                filterOption={(input, option) => {
-                  const product = products.find(p => p._id === option.value);
-                  if (product && product.productId) {
-                    const searchText = `${product.productId.sku} ${product.productId.name}`.toLowerCase();
-                    return searchText.includes(input.toLowerCase());
-                  }
-                  return false;
-                }}
-              >
-                {products.map(product => (
-                  <Select.Option key={product._id} value={product._id}>
-                    {product.productId?.sku} - {product.productId?.name} (Tồn: {product.quantity})
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item name="quantity" label="Số lượng">
-              <InputNumber min={1} style={{ width: '100%' }} />
-            </Form.Item>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => form.validateFields(['productId', 'quantity']).then(addItem)}>
-              Thêm
-            </Button>
-          </div>
-        </div>
+        <ProductSelector 
+          products={products}
+          onAdd={handleAddItem}
+          form={form}
+          isExport={true}
+        />
 
-        <Table
-          columns={columns}
-          dataSource={items}
-          pagination={false}
-          style={{ marginBottom: '24px' }}
+        <InventoryTable 
+          items={items}
+          onRemove={removeItem}
         />
 
         <Form.Item name="note" label="Ghi chú">
@@ -185,7 +88,7 @@ const InventoryExport = () => {
           <Button type="primary" htmlType="submit" loading={loading}>
             Lưu phiếu xuất
           </Button>
-          <Button onClick={() => { form.resetFields(); setItems([]); }} disabled={loading}>
+          <Button onClick={handleCancel} disabled={loading}>
             Hủy
           </Button>
         </Space>
