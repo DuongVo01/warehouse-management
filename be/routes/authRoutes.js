@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 const router = express.Router();
 
 // Login
@@ -49,6 +50,32 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+// Get user profile
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+    
+    res.json({ 
+      success: true, 
+      data: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role,
+        email: user.email,
+        employeeCode: user.employeeCode,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Profile error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 });
 
