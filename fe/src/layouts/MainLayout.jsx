@@ -112,9 +112,21 @@ const MainLayout = () => {
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
           />
-          <Dropdown overlay={userMenu} placement="bottomRight">
-            <Avatar icon={<UserOutlined />} style={{ cursor: 'pointer' }} />
-          </Dropdown>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: '500', fontSize: '14px', lineHeight: '20px' }}>
+                {currentUser?.fullName || currentUser?.FullName || 'Người dùng'}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666', lineHeight: '16px' }}>
+                {userRole === 'Admin' ? 'Quản trị viên' : 
+                 userRole === 'Staff' ? 'Nhân viên' : 
+                 userRole === 'Accountant' ? 'Kế toán' : userRole}
+              </div>
+            </div>
+            <Dropdown overlay={userMenu} placement="bottomRight">
+              <Avatar icon={<UserOutlined />} style={{ cursor: 'pointer' }} />
+            </Dropdown>
+          </div>
         </Header>
         <Content style={{ margin: '16px', padding: '24px', background: '#fff' }}>
           <Outlet />
