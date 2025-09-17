@@ -16,7 +16,22 @@ const ReportList = () => {
   const [reportType, setReportType] = useState('inventory');
   const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
   
-  const { loading, reportData, stats, loadStats, generateReport, setReportData } = useReports();
+  const { 
+    loading, 
+    reportData, 
+    searchText,
+    setSearchText,
+    stats, 
+    loadStats, 
+    generateReport, 
+    setReportData,
+    filterReportData
+  } = useReports();
+
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    filterReportData(value);
+  };
 
   useEffect(() => {
     loadStats();
@@ -58,6 +73,8 @@ const ReportList = () => {
         onExportPDF={handleExportPDF}
         loading={loading}
         setReportData={setReportData}
+        searchText={searchText}
+        onSearchChange={handleSearchChange}
       />
 
       <ReportTable

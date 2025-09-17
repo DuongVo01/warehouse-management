@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Row, Col, DatePicker, Button, Select, Space } from 'antd';
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { Card, Row, Col, DatePicker, Button, Select, Space, Input } from 'antd';
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons';
 
 const { RangePicker } = DatePicker;
 
@@ -14,11 +14,13 @@ const ReportFilters = ({
   onExportExcel,
   onExportPDF, 
   loading,
-  setReportData 
+  setReportData,
+  searchText,
+  onSearchChange
 }) => {
   return (
     <Card style={{ marginBottom: 24 }}>
-      <Row gutter={16} align="middle">
+      <Row gutter={16} align="middle" style={{ marginBottom: 16 }}>
         <Col span={6}>
           <Select
             value={reportType}
@@ -56,6 +58,18 @@ const ReportFilters = ({
               Xuất PDF
             </Button>
           </Space>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={12}>
+          <Input
+            placeholder="Tìm kiếm theo sản phẩm, nhà cung cấp, người tạo..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => onSearchChange(e.target.value)}
+            allowClear
+            style={{ width: '100%' }}
+          />
         </Col>
       </Row>
     </Card>

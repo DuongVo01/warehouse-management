@@ -6,6 +6,8 @@ import { inventoryAPI } from '../../../services/api/inventoryAPI';
 export const useReports = () => {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState([]);
+  const [allReportData, setAllReportData] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalValue: 0,
@@ -72,14 +74,17 @@ export const useReports = () => {
       
       if (response.data.success) {
         const data = response.data.data || [];
-        // Đảm bảo data luôn là array
-        setReportData(Array.isArray(data) ? data : []);
+        const arrayData = Array.isArray(data) ? data : [];
+        setAllReportData(arrayData);
+        setReportData(arrayData);
       } else {
+        setAllReportData([]);
         setReportData([]);
       }
     } catch (error) {
       console.error('Generate report error:', error);
       message.error('Lỗi tải báo cáo');
+      setAllReportData([]);
       setReportData([]);
     } finally {
       setLoading(false);
@@ -89,9 +94,30 @@ export const useReports = () => {
   return {
     loading,
     reportData,
+    searchText,
+    setSearchText,
     stats,
     loadStats,
     generateReport,
-    setReportData
+    setReportData,
+    filterReportData: (text) => {
+      if (!text.trim()) {
+        setReportData(allReportData);
+        return;
+      }
+      
+      const search = text.toLowerCase();
+      const filtered = allReportData.filter(item => {
+        return (
+          item.productId?.sku?.toLowerCase().includes(search) ||
+          item.productId?.name?.toLowerCase().includes(search) ||
+          item.supplierId?.name?.toLowerCase().includes(search) ||
+          item.createdBy?.fullName?.toLowerCase().includes(search) ||
+          item.customerInfo?.toLowerCase().includes(search) ||
+          item.transactionType?.toLowerCase().includes(search)
+        );
+      });
+      setReportData(filtered);
+    }
   };
 };
