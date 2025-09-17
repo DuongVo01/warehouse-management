@@ -6,6 +6,7 @@ import StockCheckStatsCards from './components/StockCheckStatsCards';
 import StockCheckTable from './components/StockCheckTable';
 import StockCheckForm from './components/StockCheckForm';
 import StockCheckDetailModal from './components/StockCheckDetailModal';
+import StockCheckSearch from './components/StockCheckSearch';
 
 const StockCheck = () => {
   const {
@@ -15,10 +16,15 @@ const StockCheck = () => {
     userRole,
     currentStock,
     setCurrentStock,
+    searchText,
+    setSearchText,
+    filterStatus,
+    setFilterStatus,
     handleProductChange,
     createStockCheck,
     approveStockCheck,
-    rejectStockCheck
+    rejectStockCheck,
+    loadStockChecks
   } = useStockCheck();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -65,6 +71,14 @@ const StockCheck = () => {
       </div>
 
       <StockCheckStatsCards stockChecks={stockChecks} />
+
+      <StockCheckSearch
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        filterStatus={filterStatus}
+        onFilterChange={setFilterStatus}
+        onRefresh={loadStockChecks}
+      />
 
       <div style={{ marginBottom: 16 }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>

@@ -6,10 +6,13 @@ import { authAPI } from '../../../services/api/authAPI';
 
 export const useStockCheck = () => {
   const [stockChecks, setStockChecks] = useState([]);
+  const [allStockChecks, setAllStockChecks] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState('');
   const [currentStock, setCurrentStock] = useState(0);
+  const [searchText, setSearchText] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const loadUserProfile = async () => {
     try {
@@ -27,7 +30,9 @@ export const useStockCheck = () => {
     try {
       const response = await inventoryAPI.getStockChecks();
       if (response.data.success) {
-        setStockChecks(response.data.data || []);
+        const data = response.data.data || [];
+        setAllStockChecks(data);
+        setStockChecks(data);
       }
     } catch (error) {
       console.error('Stock check error:', error);
@@ -35,6 +40,26 @@ export const useStockCheck = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterStockChecks = () => {
+    let filtered = [...allStockChecks];
+    
+    if (searchText.trim()) {
+      const search = searchText.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.checkId?.toLowerCase().includes(search) ||
+        item.productId?.sku?.toLowerCase().includes(search) ||
+        item.productId?.name?.toLowerCase().includes(search) ||
+        item.createdBy?.fullName?.toLowerCase().includes(search)
+      );
+    }
+    
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(item => item.status === filterStatus);
+    }
+    
+    setStockChecks(filtered);
   };
 
   const loadProducts = async () => {
@@ -108,6 +133,10 @@ export const useStockCheck = () => {
     loadUserProfile();
   }, []);
 
+  useEffect(() => {
+    filterStockChecks();
+  }, [searchText, filterStatus, allStockChecks]);
+
   return {
     stockChecks,
     products,
@@ -115,6 +144,10 @@ export const useStockCheck = () => {
     userRole,
     currentStock,
     setCurrentStock,
+    searchText,
+    setSearchText,
+    filterStatus,
+    setFilterStatus,
     handleProductChange,
     createStockCheck,
     approveStockCheck,
