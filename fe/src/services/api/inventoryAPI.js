@@ -25,6 +25,12 @@ export const inventoryAPI = {
   // Stock balance
   getBalance: (params) => api.get('/inventory/balance', { params }),
   
+  // Stock check
+  getStockChecks: (params) => api.get('/inventory/stock-checks', { params }),
+  createStockCheck: (data) => api.post('/inventory/stock-checks', data),
+  approveStockCheck: (id) => api.put(`/inventory/stock-checks/${id}/approve`),
+  rejectStockCheck: (id) => api.put(`/inventory/stock-checks/${id}/reject`),
+  
   // Stats
   getStats: () => api.get('/inventory/stats'),
   

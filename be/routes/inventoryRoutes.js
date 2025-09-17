@@ -19,4 +19,10 @@ router.get('/stats', auth, inventoryController.getStats);
 // API giao dịch
 router.get('/transactions', auth, inventoryController.getTransactions);
 
+// API kiểm kê kho
+router.get('/stock-checks', auth, inventoryController.getStockChecks);
+router.post('/stock-checks', auth, role(['Admin', 'Staff']), inventoryController.createStockCheck);
+router.put('/stock-checks/:id/approve', auth, role(['Admin']), inventoryController.approveStockCheck);
+router.put('/stock-checks/:id/reject', auth, role(['Admin']), inventoryController.rejectStockCheck);
+
 module.exports = router;
