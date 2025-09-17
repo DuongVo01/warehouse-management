@@ -51,8 +51,16 @@ const Profile = () => {
       const response = await authAPI.getProfile();
       if (response.data.success) {
         const userData = response.data.data;
+        console.log('User data from API:', userData);
+        console.log('Phone field specifically:', userData.phone, typeof userData.phone);
         setCurrentUser(userData);
         form.setFieldsValue({
+          Username: userData.username,
+          FullName: userData.fullName,
+          Email: userData.email,
+          Phone: userData.phone
+        });
+        console.log('Form values set:', {
           Username: userData.username,
           FullName: userData.fullName,
           Email: userData.email,
