@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Button, Space } from 'antd';
+import { Modal, Form, Input, Button, Space, Switch } from 'antd';
 
 const SupplierForm = ({ 
   visible, 
@@ -63,6 +63,18 @@ const SupplierForm = ({
           label="Địa chỉ"
         >
           <Input.TextArea rows={3} placeholder="Nhập địa chỉ đầy đủ" />
+        </Form.Item>
+
+        <Form.Item
+          name="isActive"
+          label="Trạng thái"
+          valuePropName="checked"
+          initialValue={true}
+        >
+          <Switch 
+            checkedChildren="Hoạt động" 
+            unCheckedChildren="Ngừng hoạt động" 
+          />
         </Form.Item>
 
         <div style={{ textAlign: 'right', marginTop: '24px' }}>

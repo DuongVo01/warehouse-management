@@ -4,14 +4,19 @@ import { supplierAPI } from '../../../services/api/supplierAPI';
 
 export const useSuppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
+  const [allSuppliers, setAllSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const loadSuppliers = async () => {
     setLoading(true);
     try {
       const response = await supplierAPI.getSuppliers();
       if (response.data.success) {
-        setSuppliers(response.data.data || []);
+        const data = response.data.data || [];
+        setAllSuppliers(data);
+        setSuppliers(data);
       } else {
         message.error(response.data.message || 'Lỗi tải danh sách nhà cung cấp');
       }
@@ -24,6 +29,28 @@ export const useSuppliers = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterSuppliers = () => {
+    let filtered = [...allSuppliers];
+    
+    if (searchText.trim()) {
+      const search = searchText.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.name?.toLowerCase().includes(search) ||
+        item.contactPerson?.toLowerCase().includes(search) ||
+        item.phone?.toLowerCase().includes(search) ||
+        item.email?.toLowerCase().includes(search) ||
+        item.address?.toLowerCase().includes(search)
+      );
+    }
+    
+    if (filterStatus !== 'all') {
+      const isActive = filterStatus === 'active';
+      filtered = filtered.filter(item => item.isActive === isActive);
+    }
+    
+    setSuppliers(filtered);
   };
 
   const deleteSupplier = async (supplierId, force = false) => {
@@ -95,10 +122,19 @@ export const useSuppliers = () => {
     loadSuppliers();
   }, []);
 
+  useEffect(() => {
+    filterSuppliers();
+  }, [searchText, filterStatus, allSuppliers]);
+
   return {
     suppliers,
     loading,
+    searchText,
+    setSearchText,
+    filterStatus,
+    setFilterStatus,
     deleteSupplier,
-    saveSupplier
+    saveSupplier,
+    loadSuppliers
   };
 };

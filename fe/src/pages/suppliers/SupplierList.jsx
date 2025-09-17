@@ -4,9 +4,20 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useSuppliers } from './hooks/useSuppliers';
 import SupplierTable from './components/SupplierTable';
 import SupplierForm from './components/SupplierForm';
+import SupplierSearch from './components/SupplierSearch';
 
 const SupplierList = () => {
-  const { suppliers, loading, deleteSupplier, saveSupplier } = useSuppliers();
+  const { 
+    suppliers, 
+    loading, 
+    searchText,
+    setSearchText,
+    filterStatus,
+    setFilterStatus,
+    deleteSupplier, 
+    saveSupplier,
+    loadSuppliers
+  } = useSuppliers();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [form] = Form.useForm();
@@ -56,6 +67,14 @@ const SupplierList = () => {
           Thêm nhà cung cấp
         </Button>
       </div>
+
+      <SupplierSearch
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        filterStatus={filterStatus}
+        onFilterChange={setFilterStatus}
+        onRefresh={loadSuppliers}
+      />
 
       <SupplierTable 
         suppliers={suppliers}

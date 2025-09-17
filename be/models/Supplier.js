@@ -27,6 +27,10 @@ const supplierSchema = new mongoose.Schema({
   taxCode: {
     type: String,
     trim: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true

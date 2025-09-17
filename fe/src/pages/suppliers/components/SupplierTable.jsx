@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Space, Popconfirm } from 'antd';
+import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 
 const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
@@ -47,6 +47,17 @@ const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
       dataIndex: 'address',
       key: 'address',
       ellipsis: true
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 120,
+      render: (isActive) => (
+        <Tag color={isActive ? 'green' : 'red'}>
+          {isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+        </Tag>
+      )
     },
     {
       title: 'Thao tác',
