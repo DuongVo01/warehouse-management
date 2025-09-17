@@ -101,10 +101,44 @@ const getUserById = async (req, res) => {
   }
 };
 
+// Cập nhật profile cá nhân
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const currentUserId = req.user._id.toString();
+    
+    // Chỉ cho phép user cập nhật profile của chính mình hoặc Admin
+    if (userId !== currentUserId && req.user.role !== 'Admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Không có quyền cập nhật thông tin này' 
+      });
+    }
+
+    const updateData = { ...req.body };
+    
+    if (updateData.password) {
+      updateData.passwordHash = await bcrypt.hash(updateData.password, 10);
+      delete updateData.password;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+
+    const { passwordHash: _, ...userData } = user.toObject();
+    res.json({ success: true, data: userData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createUser,
   updateUser,
   deleteUser,
   getAllUsers,
-  getUserById
+  getUserById,
+  updateProfile
 };

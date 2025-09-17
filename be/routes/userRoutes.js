@@ -17,7 +17,7 @@ router.get('/:id', auth, role(['Admin']), userController.getUserById);
 router.put('/:id', auth, role(['Admin']), userController.updateUser);
 
 // API cập nhật profile cá nhân
-router.put('/:id/profile', auth, userController.updateUser);
+router.put('/:id/profile', auth, userController.updateProfile);
 
 // API xóa người dùng
 router.delete('/:id', auth, role(['Admin']), userController.deleteUser);

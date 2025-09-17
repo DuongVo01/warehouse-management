@@ -1,45 +1,38 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, Button, message, Tag, Spin } from 'antd';
 import { UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { userAPI } from '../../services/api/userAPI';
+import { authAPI } from '../../services/api/authAPI';
 import { getRoleLabel } from '../../utils/roleUtils';
 
 const Profile = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState({});
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
       const updateData = {
-        FullName: values.FullName?.trim(),
-        Email: values.Email?.trim(),
-        Phone: values.Phone?.trim() || null
+        fullName: values.FullName?.trim(),
+        email: values.Email?.trim(),
+        phone: values.Phone?.trim() || null
       };
 
       if (values.Password && values.Password.trim()) {
-        updateData.Password = values.Password.trim();
+        updateData.password = values.Password.trim();
       }
 
-      const userId = currentUser?.id || currentUser?.UserID;
+      const userId = currentUser?.id;
       console.log('Updating user:', userId, updateData);
       
       const response = await userAPI.updateProfile(userId, updateData);
       console.log('Update response:', response.data);
       
       if (response.data.success) {
-        // Cập nhật localStorage với cấu trúc đúng
-        const updatedUser = {
-          ...currentUser,
-          fullName: updateData.FullName,
-          FullName: updateData.FullName,
-          email: updateData.Email,
-          Email: updateData.Email,
-          phone: updateData.Phone,
-          Phone: updateData.Phone
-        };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Cập nhật state và reload profile
+        await loadUserProfile();
         message.success('Cập nhật thông tin thành công');
       } else {
         message.error(response.data.message || 'Lỗi cập nhật thông tin');
@@ -52,14 +45,39 @@ const Profile = () => {
     }
   };
 
-  React.useEffect(() => {
-    form.setFieldsValue({
-      Username: currentUser?.username || currentUser?.Username,
-      FullName: currentUser?.fullName || currentUser?.FullName,
-      Email: currentUser?.email || currentUser?.Email,
-      Phone: currentUser?.phone || currentUser?.Phone
-    });
-  }, [form, currentUser]);
+  const loadUserProfile = async () => {
+    setProfileLoading(true);
+    try {
+      const response = await authAPI.getProfile();
+      if (response.data.success) {
+        const userData = response.data.data;
+        setCurrentUser(userData);
+        form.setFieldsValue({
+          Username: userData.username,
+          FullName: userData.fullName,
+          Email: userData.email,
+          Phone: userData.phone
+        });
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      message.error('Lỗi tải thông tin cá nhân');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  if (profileLoading) {
+    return (
+      <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: '50px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
