@@ -1,33 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Input, Button, Space } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 
 const ProductSearch = ({ onSearch, onAdd }) => {
-  const [searchText, setSearchText] = useState('');
+  const [searchValue, setSearchValue] = useState('');
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearch(searchText.trim());
-    }, 500);
+  const handleSearchChange = useCallback((e) => {
+    setSearchValue(e.target.value);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchText, onSearch]);
+  const handleSearch = useCallback(() => {
+    onSearch(searchValue);
+  }, [onSearch, searchValue]);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
+
+  const handleClear = useCallback(() => {
+    setSearchValue('');
+    onSearch('');
+  }, [onSearch]);
 
   return (
-    <div className="action-buttons">
+    <div style={{ marginBottom: 16 }}>
       <Space>
+        <Input.Search
+          placeholder="Tìm kiếm theo tên hoặc mã sản phẩm"
+          value={searchValue}
+          onChange={handleSearchChange}
+          onSearch={handleSearch}
+          onKeyPress={handleKeyPress}
+          style={{ width: 300 }}
+          allowClear
+          onClear={handleClear}
+          enterButton={<SearchOutlined />}
+        />
         <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
           Thêm sản phẩm
         </Button>
-        <Input
-          placeholder="Tìm kiếm theo tên hoặc mã sản phẩm..."
-          prefix={<SearchOutlined />}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          allowClear
-          style={{ width: 300 }}
-        />
       </Space>
     </div>
   );
