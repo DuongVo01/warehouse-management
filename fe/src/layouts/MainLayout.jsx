@@ -24,6 +24,9 @@ const MainLayout = () => {
 
   const menuItems = getMenuByRole(userRole);
 
+  // Tính toán margin left cho content dựa trên trạng thái sidebar
+  const sidebarWidth = collapsed ? 80 : 250;
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <AppSider
@@ -34,7 +37,7 @@ const MainLayout = () => {
         selectedKey={selectedKey}
         onMenuClick={handleMenuClick}
       />
-      <Layout>
+      <Layout style={{ marginLeft: sidebarWidth }}>
         <AppHeader
           collapsed={collapsed}
           onToggle={handleToggle}
@@ -43,7 +46,16 @@ const MainLayout = () => {
           onLogout={handleLogout}
           onProfile={handleProfile}
         />
-        <Content style={{ margin: '16px', padding: '24px', background: '#fff' }}>
+        <Content 
+          style={{ 
+            margin: '16px', 
+            padding: '24px', 
+            background: '#fff',
+            marginTop: 64, // Chiều cao header
+            marginLeft: 0, // Đã được xử lý ở Layout cha
+            marginRight: 0
+          }}
+        >
           <Outlet />
         </Content>
       </Layout>

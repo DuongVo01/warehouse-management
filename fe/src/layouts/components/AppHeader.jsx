@@ -32,12 +32,19 @@ const AppHeader = ({ collapsed, onToggle, currentUser, userRole, onLogout, onPro
       background: '#fff', 
       display: 'flex', 
       justifyContent: 'space-between', 
-      alignItems: 'center' 
+      alignItems: 'center',
+      position: 'fixed',
+      zIndex: 999,
+      width: `calc(100% - ${collapsed ? '80px' : '250px'})`,
+      left: collapsed ? '80px' : '250px',
+      right: 0,
+      top: 0
     }}>
       <Button
         type="text"
         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         onClick={onToggle}
+        style={{ marginLeft: -16 }}
       />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ textAlign: 'right' }}>
