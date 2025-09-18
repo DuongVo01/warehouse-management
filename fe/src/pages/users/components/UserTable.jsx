@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { USER_ROLES } from '../utils/constants';
 
 const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} người dùng`,
+    pageSizeOptions: ['10', '20', '50', '100']
+  });
+
+  const handleTableChange = (paginationConfig) => {
+    setPagination({
+      ...pagination,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    });
+  };
+
   const columns = [
     {
       title: 'Tên đăng nhập',
@@ -125,7 +142,8 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
       dataSource={users}
       loading={loading}
       rowKey="_id"
-      pagination={{ pageSize: 10 }}
+      pagination={pagination}
+      onChange={handleTableChange}
     />
   );
 };

@@ -1,8 +1,26 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useState } from 'react';
 import { Table, Button, Space, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => 
+      `${range[0]}-${range[1]} của ${total} sản phẩm`,
+    pageSizeOptions: ['10', '20', '50', '100']
+  });
+
+  const handleTableChange = useCallback((paginationConfig) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    }));
+  }, []);
+
   const handleEdit = useCallback((record) => {
     onEdit(record);
   }, [onEdit]);
@@ -49,10 +67,10 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EditOutlined />} 
-            onClick={() => handleEdit(record)}
+          <Button
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => onEdit(record)}
           >
             Sửa
           </Button>
@@ -62,10 +80,10 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
             okText="Có"
             cancelText="Không"
           >
-            <Button 
-              type="link" 
-              danger 
+            <Button
               icon={<DeleteOutlined />}
+              size="small"
+              danger
             >
               Xóa
             </Button>
@@ -81,13 +99,8 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
       dataSource={products}
       loading={loading}
       rowKey="_id"
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        showQuickJumper: true,
-        showTotal: (total, range) => 
-          `${range[0]}-${range[1]} của ${total} sản phẩm`,
-      }}
+      pagination={pagination}
+      onChange={handleTableChange}
     />
   );
 });

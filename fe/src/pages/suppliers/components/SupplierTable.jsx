@@ -1,8 +1,26 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 
 const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => 
+      `${range[0]}-${range[1]} của ${total} nhà cung cấp`,
+    pageSizeOptions: ['10', '20', '50', '100']
+  });
+
+  const handleTableChange = useCallback((paginationConfig) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    }));
+  }, []);
+
   const columns = [
     {
       title: 'Mã NCC',
@@ -97,7 +115,8 @@ const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
       dataSource={suppliers}
       loading={loading}
       rowKey="_id"
-      pagination={{ pageSize: 10 }}
+      pagination={pagination}
+      onChange={handleTableChange}
     />
   );
 };
