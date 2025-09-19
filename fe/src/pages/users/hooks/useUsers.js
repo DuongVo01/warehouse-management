@@ -50,7 +50,7 @@ export const useUsers = () => {
     }
   };
 
-  const saveUser = async (userData, editingUser) => {
+  const saveUser = async (userData, editingUser, avatarFile = null) => {
     try {
       if (editingUser) {
         const response = await userAPI.updateUser(editingUser._id, userData);
@@ -63,8 +63,23 @@ export const useUsers = () => {
           return false;
         }
       } else {
+        // Tạo user trước
         const response = await userAPI.createUser(userData);
         if (response.data.success) {
+          const newUser = response.data.data;
+          
+          // Nếu có avatar, upload sau khi tạo user
+          if (avatarFile) {
+            try {
+              const formData = new FormData();
+              formData.append('avatar', avatarFile);
+              await userAPI.uploadAvatarForUser(newUser._id, formData);
+            } catch (avatarError) {
+              console.error('Avatar upload error:', avatarError);
+              message.warning('Tạo người dùng thành công nhưng upload avatar thất bại');
+            }
+          }
+          
           await loadUsers();
           message.success('Thêm người dùng thành công');
           return true;

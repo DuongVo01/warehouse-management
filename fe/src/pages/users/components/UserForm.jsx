@@ -6,6 +6,7 @@ import { userAPI } from '../../../services/api/userAPI';
 
 const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
   
   // Cập nhật avatarUrl khi editingUser thay đổi
   useEffect(() => {
@@ -14,49 +15,73 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
     } else {
       setAvatarUrl('');
     }
+    setAvatarFile(null);
   }, [editingUser]);
 
-  const handleAvatarUpload = async (file) => {
+  const handleAvatarSelect = (file) => {
+    // Lưu file tạm thời và hiển thị preview
+    setAvatarFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarUrl(previewUrl);
+    return false; // Ngăn upload tự động
+  };
+
+  const uploadAvatar = async (file, userId = null) => {
     try {
       const formData = new FormData();
       formData.append('avatar', file);
       
       let response;
-      if (editingUser) {
-        // Nếu đang edit user, sử dụng API upload cho user đó
-        response = await userAPI.uploadAvatarForUser(editingUser._id, formData);
+      if (userId) {
+        // Upload cho user cụ thể
+        response = await userAPI.uploadAvatarForUser(userId, formData);
       } else {
-        // Nếu tạo user mới, sử dụng API upload cho chính mình
+        // Upload cho chính mình
         response = await userAPI.uploadAvatar(formData);
       }
       
       if (response.data.success) {
-        const avatarPath = response.data.data.avatar;
-        const fullAvatarUrl = `http://localhost:3000${avatarPath}`;
-        setAvatarUrl(fullAvatarUrl);
-        form.setFieldsValue({ avatar: avatarPath });
-        
-        // Chỉ cập nhật localStorage nếu đang edit chính user hiện tại
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        if (editingUser && editingUser._id === currentUser.id) {
-          const updatedUser = { ...currentUser, avatar: avatarPath };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          // Trigger event để cập nhật header
-          window.dispatchEvent(new Event('userUpdated'));
-        }
-        
-        message.success('Tải ảnh thành công');
+        return response.data.data.avatar;
       }
     } catch (error) {
       console.error('Upload error:', error);
-      message.error('Tải ảnh thất bại');
+      throw error;
     }
   };
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file && beforeUpload(file)) {
-      handleAvatarUpload(file);
+      handleAvatarSelect(file);
+    }
+  };
+
+  // Xử lý submit với avatar
+  const handleSubmit = async (values) => {
+    try {
+      if (editingUser) {
+        // Nếu đang edit user
+        let avatarPath = values.avatar;
+        
+        if (avatarFile) {
+          avatarPath = await uploadAvatar(avatarFile, editingUser._id);
+          
+          // Cập nhật localStorage nếu đang edit chính mình
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          if (editingUser._id === currentUser.id) {
+            const updatedUser = { ...currentUser, avatar: avatarPath };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event('userUpdated'));
+          }
+        }
+        
+        onSubmit({ ...values, avatar: avatarPath });
+      } else {
+        // Nếu tạo user mới, gửi avatarFile kèm theo
+        onSubmit({ ...values, avatarFile });
+      }
+    } catch (error) {
+      message.error('Lỗi upload avatar');
     }
   };
 
@@ -81,7 +106,7 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
     <Form
       form={form}
       layout="vertical"
-      onFinish={onSubmit}
+      onFinish={handleSubmit}
     >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <Form.Item

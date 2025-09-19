@@ -56,7 +56,8 @@ const UserList = () => {
       email: values.email?.trim(),
       phone: values.phone?.trim() || null,
       role: values.role,
-      isActive: values.isActive !== undefined ? values.isActive : true
+      isActive: values.isActive !== undefined ? values.isActive : true,
+      avatar: values.avatar
     };
 
     if (editingUser) {
@@ -71,7 +72,7 @@ const UserList = () => {
       userData.password = values.password.trim();
     }
 
-    const success = await saveUser(userData, editingUser);
+    const success = await saveUser(userData, editingUser, values.avatarFile);
     if (success) {
       setModalVisible(false);
       form.resetFields();
