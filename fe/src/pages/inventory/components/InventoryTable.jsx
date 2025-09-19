@@ -9,14 +9,18 @@ const InventoryTable = ({ items, onRemove, showUnitPrice = false }) => {
       dataIndex: 'productImage',
       key: 'productImage',
       width: 60,
-      render: (image) => (
-        <Avatar 
-          src={image ? `http://localhost:3000${image}` : null} 
-          icon={<PictureOutlined />}
-          size={32}
-          shape="square"
-        />
-      )
+      render: (image, record) => {
+        // Xử lý cho cả nhập kho và xuất kho
+        const productImage = image || record.productId?.image || record.productImage;
+        return (
+          <Avatar 
+            src={productImage ? `http://localhost:3000${productImage}` : null} 
+            icon={<PictureOutlined />}
+            size={32}
+            shape="square"
+          />
+        );
+      }
     },
     { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
     ...(showUnitPrice ? [] : [{ title: 'Tồn kho', dataIndex: 'availableStock', key: 'availableStock' }]),

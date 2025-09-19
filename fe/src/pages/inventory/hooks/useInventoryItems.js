@@ -40,6 +40,7 @@ export const useInventoryItems = (products) => {
         productName: isExport 
           ? `${product.productId?.sku} - ${product.productId?.name}`
           : `${product.sku} - ${product.name}`,
+        productImage: isExport ? product.productId?.image : product.image,
         availableStock: isExport ? product.quantity : undefined,
         quantity: values.quantity,
         unitPrice: values.unitPrice || undefined
