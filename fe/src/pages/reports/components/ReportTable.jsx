@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Card, Table } from 'antd';
+import styles from './ReportTable.module.css';
 
 const ReportTable = ({ columns, reportData, loading, reportTypes, reportType }) => {
   // Đảm bảo reportData luôn là array
@@ -56,26 +57,28 @@ const ReportTable = ({ columns, reportData, loading, reportTypes, reportType }) 
   
   return (
     <Card>
-      <Table
-        columns={columns}
-        dataSource={safeReportData}
-        loading={loading}
-        rowKey={(record) => record._id || record.id || Math.random()}
-        pagination={pagination}
-        onChange={handleTableChange}
-        locale={locale}
-        scroll={{ x: 1000 }}
-        title={() => (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
-              {reportTypes.find(t => t.value === reportType)?.label}
-            </span>
-            <span style={{ color: '#666' }}>
-              Tổng cộng: {safeReportData.length} bản ghi
-            </span>
-          </div>
-        )}
-      />
+      <div className={styles.reportTable}>
+        <Table
+          columns={columns}
+          dataSource={safeReportData}
+          loading={loading}
+          rowKey={(record) => record._id || record.id || Math.random()}
+          pagination={pagination}
+          onChange={handleTableChange}
+          locale={locale}
+          scroll={{ x: 1000 }}
+          title={() => (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                {reportTypes.find(t => t.value === reportType)?.label}
+              </span>
+              <span style={{ color: '#666' }}>
+                Tổng cộng: {safeReportData.length} bản ghi
+              </span>
+            </div>
+          )}
+        />
+      </div>
     </Card>
   );
 };

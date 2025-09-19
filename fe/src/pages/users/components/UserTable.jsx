@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { USER_ROLES } from '../utils/constants';
+import styles from './UserTable.module.css';
 
 const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
   const [pagination, setPagination] = useState({
@@ -137,14 +138,16 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={users}
-      loading={loading}
-      rowKey="_id"
-      pagination={pagination}
-      onChange={handleTableChange}
-    />
+    <div className={styles.userTable}>
+      <Table
+        columns={columns}
+        dataSource={users}
+        loading={loading}
+        rowKey="_id"
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
+    </div>
   );
 };
 

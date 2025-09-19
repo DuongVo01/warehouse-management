@@ -1,0 +1,12 @@
+.reportTable :global(.ant-pagination-options-quick-jumper) {
+  font-size: 0;
+}
+
+.reportTable :global(.ant-pagination-options-quick-jumper)::before {
+  content: 'Đến trang ';
+  font-size: 14px;
+}
+
+.reportTable :global(.ant-pagination-options-quick-jumper input) {
+  font-size: 14px;
+}

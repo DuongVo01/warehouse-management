@@ -1,6 +1,7 @@
 import React, { memo, useMemo, useCallback, useState } from 'react';
 import { Table, Button, Space, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import styles from './ProductTable.module.css';
 
 const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
   const [pagination, setPagination] = useState({
@@ -94,14 +95,16 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
   ], [handleEdit, handleDelete]);
 
   return (
-    <Table
-      columns={columns}
-      dataSource={products}
-      loading={loading}
-      rowKey="_id"
-      pagination={pagination}
-      onChange={handleTableChange}
-    />
+    <div className={styles.productTable}>
+      <Table
+        columns={columns}
+        dataSource={products}
+        loading={loading}
+        rowKey="_id"
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
+    </div>
   );
 });
 

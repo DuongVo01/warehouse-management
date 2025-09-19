@@ -1,0 +1,12 @@
+.userTable :global(.ant-pagination-options-quick-jumper) {
+  font-size: 0;
+}
+
+.userTable :global(.ant-pagination-options-quick-jumper)::before {
+  content: 'Đến trang ';
+  font-size: 14px;
+}
+
+.userTable :global(.ant-pagination-options-quick-jumper input) {
+  font-size: 14px;
+}

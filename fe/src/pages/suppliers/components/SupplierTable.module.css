@@ -1,0 +1,12 @@
+.supplierTable :global(.ant-pagination-options-quick-jumper) {
+  font-size: 0;
+}
+
+.supplierTable :global(.ant-pagination-options-quick-jumper)::before {
+  content: 'Đến trang ';
+  font-size: 14px;
+}
+
+.supplierTable :global(.ant-pagination-options-quick-jumper input) {
+  font-size: 14px;
+}

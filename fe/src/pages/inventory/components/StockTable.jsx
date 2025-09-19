@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Table, Tag } from 'antd';
+import styles from './StockTable.module.css';
 
 const StockTable = ({ data, loading }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => 
+      `${range[0]}-${range[1]} của ${total} sản phẩm`,
+    pageSizeOptions: ['10', '20', '50', '100']
+  });
+
+  const handleTableChange = useCallback((paginationConfig) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    }));
+  }, []);
   const columns = [
     { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
     { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'productName' },
@@ -54,14 +72,17 @@ const StockTable = ({ data, loading }) => {
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      rowKey="_id"
-      pagination={{ pageSize: 20 }}
-      scroll={{ x: 1000 }}
-    />
+    <div className={styles.stockTable}>
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        rowKey="_id"
+        pagination={pagination}
+        onChange={handleTableChange}
+        scroll={{ x: 1000 }}
+      />
+    </div>
   );
 };
 

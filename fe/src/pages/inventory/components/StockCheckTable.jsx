@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Table, Button, Space, Tag } from 'antd';
+import styles from './StockCheckTable.module.css';
 import { EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 const StockCheckTable = ({ 
@@ -10,6 +11,23 @@ const StockCheckTable = ({
   onApprove, 
   onReject 
 }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total, range) => 
+      `${range[0]}-${range[1]} của ${total} phiếu kiểm kê`,
+    pageSizeOptions: ['10', '20', '50', '100']
+  });
+
+  const handleTableChange = useCallback((paginationConfig) => {
+    setPagination(prev => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    }));
+  }, []);
   const columns = [
     { title: 'Mã kiểm kê', dataIndex: 'checkId', key: 'checkId' },
     { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
@@ -71,13 +89,16 @@ const StockCheckTable = ({
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={stockChecks}
-      loading={loading}
-      rowKey="_id"
-      pagination={{ pageSize: 10 }}
-    />
+    <div className={styles.stockCheckTable}>
+      <Table
+        columns={columns}
+        dataSource={stockChecks}
+        loading={loading}
+        rowKey="_id"
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
+    </div>
   );
 };
 

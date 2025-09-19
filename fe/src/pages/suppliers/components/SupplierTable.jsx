@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import styles from './SupplierTable.module.css';
 
 const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
   const [pagination, setPagination] = useState({
@@ -110,14 +111,16 @@ const SupplierTable = ({ suppliers, loading, onEdit, onDelete }) => {
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={suppliers}
-      loading={loading}
-      rowKey="_id"
-      pagination={pagination}
-      onChange={handleTableChange}
-    />
+    <div className={styles.supplierTable}>
+      <Table
+        columns={columns}
+        dataSource={suppliers}
+        loading={loading}
+        rowKey="_id"
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
+    </div>
   );
 };
 
