@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useUsers } from './hooks/useUsers';
@@ -9,12 +9,20 @@ const UserList = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
-  const { users, loading, deleteUser, saveUser } = useUsers();
+  const { users, loading, deleteUser, saveUser, loadUsers } = useUsers();
   
   // Lấy thông tin user hiện tại từ localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  console.log('Current user:', currentUser);
-  console.log('Users list:', users);
+  
+  // Refresh danh sách users khi component focus lại
+  useEffect(() => {
+    const handleFocus = () => {
+      loadUsers();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadUsers]);
 
   const handleAdd = () => {
     setEditingUser(null);
@@ -32,6 +40,7 @@ const UserList = () => {
       phone: user.phone,
       role: user.role,
       isActive: user.isActive,
+      avatar: user.avatar,
       password: ''
     });
     setModalVisible(true);

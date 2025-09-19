@@ -29,6 +29,18 @@ export const useLayout = () => {
 
   useEffect(() => {
     loadUserProfile();
+    
+    // Lắng nghe event cập nhật user
+    const handleUserUpdated = () => {
+      const updatedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      setCurrentUser(updatedUser);
+    };
+    
+    window.addEventListener('userUpdated', handleUserUpdated);
+    
+    return () => {
+      window.removeEventListener('userUpdated', handleUserUpdated);
+    };
   }, []);
 
   const handleToggle = () => setCollapsed(!collapsed);

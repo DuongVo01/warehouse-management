@@ -1,8 +1,74 @@
-import React from 'react';
-import { Form, Input, Select, Button, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Select, Button, Space, Avatar, message } from 'antd';
+import { UserOutlined, UploadOutlined } from '@ant-design/icons';
 import { USER_ROLES, FORM_RULES } from '../utils/constants';
+import { userAPI } from '../../../services/api/userAPI';
 
 const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
+  const [avatarUrl, setAvatarUrl] = useState('');
+  
+  // Cập nhật avatarUrl khi editingUser thay đổi
+  useEffect(() => {
+    if (editingUser?.avatar) {
+      setAvatarUrl(`http://localhost:3000${editingUser.avatar}`);
+    } else {
+      setAvatarUrl('');
+    }
+  }, [editingUser]);
+
+  const handleAvatarUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await userAPI.uploadAvatar(formData);
+      if (response.data.success) {
+        const avatarPath = response.data.data.avatar;
+        const fullAvatarUrl = `http://localhost:3000${avatarPath}`;
+        setAvatarUrl(fullAvatarUrl);
+        form.setFieldsValue({ avatar: avatarPath });
+        
+        // Chỉ cập nhật localStorage nếu đang edit chính user hiện tại
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (editingUser && editingUser._id === currentUser.id) {
+          const updatedUser = { ...currentUser, avatar: avatarPath };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          // Trigger event để cập nhật header
+          window.dispatchEvent(new Event('userUpdated'));
+        }
+        
+        message.success('Tải ảnh thành công');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      message.error('Tải ảnh thất bại');
+    }
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && beforeUpload(file)) {
+      handleAvatarUpload(file);
+    }
+  };
+
+  // Kiểm tra xem có phải đang edit chính mình không
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isEditingSelf = editingUser && editingUser._id === currentUser.id;
+  const canUploadAvatar = !editingUser || isEditingSelf;
+
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+      message.error('Chỉ hỗ trợ file JPG/PNG!');
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Ảnh phải nhỏ hơn 2MB!');
+    }
+    return isJpgOrPng && isLt2M;
+  };
+
   return (
     <Form
       form={form}
@@ -68,7 +134,36 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
         </Form.Item>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <Form.Item
+          name="avatar"
+          label="Avatar"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Avatar 
+              src={avatarUrl} 
+              icon={<UserOutlined />} 
+              size={64}
+            />
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="avatar-upload"
+                onChange={handleFileSelect}
+              />
+              <Button 
+                icon={<UploadOutlined />}
+                onClick={() => document.getElementById('avatar-upload').click()}
+                disabled={!canUploadAvatar}
+              >
+                {canUploadAvatar ? 'Chọn ảnh' : 'Không thể sửa avatar'}
+              </Button>
+            </div>
+          </div>
+        </Form.Item>
+
         <Form.Item
           name="isActive"
           label="Trạng thái"
@@ -80,6 +175,8 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
           </Select>
         </Form.Item>
       </div>
+
+
 
       <Form.Item
         name="password"

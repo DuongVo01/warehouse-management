@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Popconfirm, Tag } from 'antd';
+import { Table, Button, Space, Popconfirm, Tag, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { USER_ROLES } from '../utils/constants';
 import styles from './UserTable.module.css';
@@ -23,6 +23,19 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
   };
 
   const columns = [
+    {
+      title: 'Avatar',
+      dataIndex: 'avatar',
+      key: 'avatar',
+      width: 80,
+      render: (avatar, record) => (
+        <Avatar 
+          src={avatar ? `http://localhost:3000${avatar}` : null} 
+          icon={<UserOutlined />}
+          size={40}
+        />
+      )
+    },
     {
       title: 'Tên đăng nhập',
       dataIndex: 'username',

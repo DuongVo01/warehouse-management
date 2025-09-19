@@ -18,6 +18,16 @@ const Profile = () => {
     try {
       const response = await userAPI.uploadAvatar(formData);
       if (response.data.success) {
+        const avatarPath = response.data.data.avatar;
+        
+        // Cập nhật localStorage
+        const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...currentUserData, avatar: avatarPath };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Trigger event để cập nhật header
+        window.dispatchEvent(new Event('userUpdated'));
+        
         message.success('Cập nhật avatar thành công');
         await loadUserProfile(); // Reload to get new avatar
       }
