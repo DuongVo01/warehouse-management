@@ -56,14 +56,41 @@ export const useProducts = () => {
     }
   };
 
-  const saveProduct = async (productData, editingProduct) => {
+  const saveProduct = async (productData, editingProduct, imageFile = null) => {
     try {
       let response;
       if (editingProduct) {
         response = await productAPI.updateProduct(editingProduct._id, productData);
+        
+        // Upload hình ảnh nếu có
+        if (imageFile) {
+          try {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            await productAPI.uploadProductImage(editingProduct._id, formData);
+          } catch (imageError) {
+            console.error('Image upload error:', imageError);
+            message.warning('Cập nhật sản phẩm thành công nhưng upload hình ảnh thất bại');
+          }
+        }
+        
         message.success('Cập nhật sản phẩm thành công');
       } else {
         response = await productAPI.createProduct(productData);
+        
+        // Upload hình ảnh sau khi tạo sản phẩm
+        if (response.data.success && imageFile) {
+          try {
+            const newProduct = response.data.data;
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            await productAPI.uploadProductImage(newProduct._id, formData);
+          } catch (imageError) {
+            console.error('Image upload error:', imageError);
+            message.warning('Thêm sản phẩm thành công nhưng upload hình ảnh thất bại');
+          }
+        }
+        
         message.success('Thêm sản phẩm thành công');
       }
       

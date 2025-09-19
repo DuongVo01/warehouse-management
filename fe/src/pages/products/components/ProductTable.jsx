@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useCallback, useState } from 'react';
-import { Table, Button, Space, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Popconfirm, Avatar } from 'antd';
+import { EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
 import styles from './ProductTable.module.css';
 
 const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
@@ -31,6 +31,20 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
   }, [onDelete]);
 
   const columns = useMemo(() => [
+    {
+      title: 'Hình ảnh',
+      dataIndex: 'image',
+      key: 'image',
+      width: 80,
+      render: (image) => (
+        <Avatar 
+          src={image ? `http://localhost:3000${image}` : null} 
+          icon={<PictureOutlined />}
+          size={40}
+          shape="square"
+        />
+      )
+    },
     {
       title: 'Mã sản phẩm',
       dataIndex: 'sku',

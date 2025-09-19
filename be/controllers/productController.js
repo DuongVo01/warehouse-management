@@ -83,9 +83,51 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Upload image cho product
+const uploadProductImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Không có file được upload' 
+      });
+    }
+
+    const productId = req.params.id;
+    const imagePath = `/uploads/products/${req.file.filename}`;
+
+    // Cập nhật image trong database
+    const product = await Product.findByIdAndUpdate(
+      productId, 
+      { image: imagePath }, 
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy sản phẩm' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: { image: imagePath },
+      message: 'Upload hình ảnh thành công'
+    });
+  } catch (error) {
+    console.error('Upload product image error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  uploadProductImage
 };

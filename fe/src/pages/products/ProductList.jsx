@@ -40,7 +40,7 @@ const ProductList = () => {
     deleteProduct(productId);
   }, [deleteProduct]);
 
-  const handleModalOk = useCallback(async () => {
+  const handleModalOk = useCallback(async (imageFile) => {
     try {
       const values = await form.validateFields();
       
@@ -54,7 +54,7 @@ const ProductList = () => {
         location: values.location
       };
 
-      const success = await saveProduct(productData, editingProduct);
+      const success = await saveProduct(productData, editingProduct, imageFile);
       if (success) {
         setIsModalVisible(false);
         form.resetFields();

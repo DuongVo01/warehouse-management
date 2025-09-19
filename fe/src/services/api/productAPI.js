@@ -22,5 +22,13 @@ export const productAPI = {
   createProduct: (data) => api.post('/products', data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
-  getProduct: (id) => api.get(`/products/${id}`)
+  getProduct: (id) => api.get(`/products/${id}`),
+  uploadProductImage: (productId, formData) => {
+    return axios.post(`${API_URL}/products/${productId}/image`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  }
 };
