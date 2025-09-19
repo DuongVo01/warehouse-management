@@ -78,10 +78,28 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// Lấy tất cả users
+// Lấy tất cả users với tìm kiếm
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, { passwordHash: 0 }).sort({ createdAt: -1 });
+    const { search, role } = req.query;
+    let query = {};
+    
+    // Tìm kiếm theo text
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { employeeCode: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Lọc theo vai trò
+    if (role) {
+      query.role = role;
+    }
+    
+    const users = await User.find(query, { passwordHash: 0 }).sort({ createdAt: -1 });
     res.json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -134,7 +152,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Upload avatar
+// Upload avatar cho chính mình
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
@@ -175,6 +193,47 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+// Upload avatar cho user khác (chỉ Admin)
+const uploadAvatarForUser = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Không có file được upload' 
+      });
+    }
+
+    const targetUserId = req.params.id;
+    const avatarPath = `/uploads/avatars/${req.file.filename}`;
+
+    // Cập nhật avatar cho user được chỉ định
+    const user = await User.findByIdAndUpdate(
+      targetUserId, 
+      { avatar: avatarPath }, 
+      { new: true }
+    ).select('-passwordHash');
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      data: { avatar: avatarPath },
+      message: 'Upload avatar thành công'
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
 module.exports = {
   createUser,
   updateUser,
@@ -182,5 +241,6 @@ module.exports = {
   getAllUsers,
   getUserById,
   updateProfile,
-  uploadAvatar
+  uploadAvatar,
+  uploadAvatarForUser
 };

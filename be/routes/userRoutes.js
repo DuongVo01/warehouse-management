@@ -20,8 +20,11 @@ router.put('/:id', auth, role(['Admin']), userController.updateUser);
 // API cập nhật profile cá nhân
 router.put('/:id/profile', auth, userController.updateProfile);
 
-// API upload avatar
+// API upload avatar cho chính mình
 router.post('/avatar', auth, upload.single('avatar'), userController.uploadAvatar);
+
+// API upload avatar cho user khác (chỉ Admin)
+router.post('/:id/avatar', auth, role(['Admin']), upload.single('avatar'), userController.uploadAvatarForUser);
 
 // API xóa người dùng
 router.delete('/:id', auth, role(['Admin']), userController.deleteUser);

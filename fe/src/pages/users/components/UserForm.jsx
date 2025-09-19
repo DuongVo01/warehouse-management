@@ -21,7 +21,15 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
       const formData = new FormData();
       formData.append('avatar', file);
       
-      const response = await userAPI.uploadAvatar(formData);
+      let response;
+      if (editingUser) {
+        // Nếu đang edit user, sử dụng API upload cho user đó
+        response = await userAPI.uploadAvatarForUser(editingUser._id, formData);
+      } else {
+        // Nếu tạo user mới, sử dụng API upload cho chính mình
+        response = await userAPI.uploadAvatar(formData);
+      }
+      
       if (response.data.success) {
         const avatarPath = response.data.data.avatar;
         const fullAvatarUrl = `http://localhost:3000${avatarPath}`;
@@ -52,10 +60,10 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
     }
   };
 
-  // Kiểm tra xem có phải đang edit chính mình không
+  // Admin có thể upload avatar cho tất cả user
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const isEditingSelf = editingUser && editingUser._id === currentUser.id;
-  const canUploadAvatar = !editingUser || isEditingSelf;
+  const isAdmin = currentUser.role === 'Admin';
+  const canUploadAvatar = isAdmin || !editingUser;
 
   const beforeUpload = (file) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
@@ -158,7 +166,7 @@ const UserForm = ({ form, editingUser, onSubmit, onCancel }) => {
                 onClick={() => document.getElementById('avatar-upload').click()}
                 disabled={!canUploadAvatar}
               >
-                {canUploadAvatar ? 'Chọn ảnh' : 'Không thể sửa avatar'}
+                Chọn ảnh
               </Button>
             </div>
           </div>

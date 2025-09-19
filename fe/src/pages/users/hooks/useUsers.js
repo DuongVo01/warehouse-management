@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import { userAPI } from '../../../services/api/userAPI';
 
@@ -6,10 +6,10 @@ export const useUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const loadUsers = async () => {
+  const loadUsers = async (searchParams = {}) => {
     setLoading(true);
     try {
-      const response = await userAPI.getUsers();
+      const response = await userAPI.getUsers(searchParams);
       if (response.data.success) {
         setUsers(response.data.data || []);
       } else {
@@ -26,6 +26,10 @@ export const useUsers = () => {
       setLoading(false);
     }
   };
+
+  const searchUsers = useCallback((searchParams) => {
+    loadUsers(searchParams);
+  }, []);
 
   const deleteUser = async (userId) => {
     try {
@@ -88,6 +92,7 @@ export const useUsers = () => {
     users,
     loading,
     loadUsers,
+    searchUsers,
     deleteUser,
     saveUser
   };

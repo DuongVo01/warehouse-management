@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, message } from 'antd';
+import { Modal, Form, message, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useUsers } from './hooks/useUsers';
 import UserTable from './components/UserTable';
 import UserForm from './components/UserForm';
+import UserSearch from './components/UserSearch';
 
 const UserList = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
   const [form] = Form.useForm();
-  const { users, loading, deleteUser, saveUser, loadUsers } = useUsers();
+  const { users, loading, deleteUser, saveUser, loadUsers, searchUsers } = useUsers();
   
   // Lấy thông tin user hiện tại từ localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -75,10 +78,43 @@ const UserList = () => {
     }
   };
 
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    const searchParams = {};
+    if (value) searchParams.search = value;
+    if (filterRole !== 'all') searchParams.role = filterRole;
+    searchUsers(searchParams);
+  };
+
+  const handleFilterChange = (value) => {
+    setFilterRole(value);
+    const searchParams = {};
+    if (searchText) searchParams.search = searchText;
+    if (value !== 'all') searchParams.role = value;
+    searchUsers(searchParams);
+  };
+
+  const handleRefresh = () => {
+    setSearchText('');
+    setFilterRole('all');
+    loadUsers();
+  };
+
   return (
     <div>
       <div className="page-header">
         <h2>Quản lý người dùng</h2>
+      </div>
+      
+      <UserSearch 
+        searchText={searchText}
+        onSearchChange={handleSearchChange}
+        filterRole={filterRole}
+        onFilterChange={handleFilterChange}
+        onRefresh={handleRefresh}
+      />
+      
+      <div style={{ marginBottom: 16, textAlign: 'right' }}>
         <Button
           type="primary"
           icon={<PlusOutlined />}

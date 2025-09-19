@@ -49,9 +49,19 @@ const userAPI = {
     });
   },
 
-  // Upload avatar
+  // Upload avatar cho chính mình
   uploadAvatar: (formData) => {
     return axios.post(`${API_BASE_URL}/users/avatar`, formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+
+  // Upload avatar cho user khác (chỉ Admin)
+  uploadAvatarForUser: (userId, formData) => {
+    return axios.post(`${API_BASE_URL}/users/${userId}/avatar`, formData, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'multipart/form-data'
