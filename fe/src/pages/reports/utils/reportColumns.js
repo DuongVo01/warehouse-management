@@ -26,8 +26,17 @@ export const inventoryColumns = [
     key: 'status',
     render: (_, record) => {
       const quantity = record.quantity;
-      if (quantity <= 10) return <Tag color="red">Sắp hết</Tag>;
-      if (quantity <= 50) return <Tag color="orange">Sắp cạn kiệt</Tag>;
+      const expiryDate = record.productId?.expiryDate;
+      
+      if (quantity <= 10) {
+        return <Tag color="red">Sắp hết</Tag>;
+      }
+      if (quantity <= 50) {
+        return <Tag color="orange">Sắp cạn kiệt</Tag>;
+      }
+      if (expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000)) {
+        return <Tag color="volcano">Sắp hết hạn</Tag>;
+      }
       return <Tag color="green">Bình thường</Tag>;
     }
   }
