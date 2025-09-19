@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { Table, Button, Space, Tag } from 'antd';
+import { Table, Button, Space, Tag, Avatar } from 'antd';
 import styles from './StockCheckTable.module.css';
-import { EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { EyeOutlined, CheckOutlined, CloseOutlined, PictureOutlined } from '@ant-design/icons';
 
 const StockCheckTable = ({ 
   stockChecks, 
@@ -30,6 +30,20 @@ const StockCheckTable = ({
   }, []);
   const columns = [
     { title: 'Mã kiểm kê', dataIndex: 'checkId', key: 'checkId' },
+    {
+      title: 'Hình ảnh',
+      dataIndex: ['productId', 'image'],
+      key: 'image',
+      width: 60,
+      render: (image, record) => (
+        <Avatar 
+          src={record.productId?.image ? `http://localhost:3000${record.productId.image}` : null} 
+          icon={<PictureOutlined />}
+          size={32}
+          shape="square"
+        />
+      )
+    },
     { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
     { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'productName' },
     { title: 'Số lượng hệ thống', dataIndex: 'systemQuantity', key: 'systemQuantity' },

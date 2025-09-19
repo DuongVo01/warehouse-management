@@ -1,6 +1,6 @@
 import React from 'react';
-import { Form, Select, InputNumber, Button } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Form, Select, InputNumber, Button, Avatar } from 'antd';
+import { PlusOutlined, PictureOutlined } from '@ant-design/icons';
 
 const ProductSelector = ({ 
   products, 
@@ -41,8 +41,18 @@ const ProductSelector = ({
               const displayProduct = isExport ? product.productId : product;
               return (
                 <Select.Option key={product._id} value={product._id}>
-                  {displayProduct?.sku} - {displayProduct?.name}
-                  {isExport && ` (Tồn: ${product.quantity})`}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Avatar 
+                      src={displayProduct?.image ? `http://localhost:3000${displayProduct.image}` : null} 
+                      icon={<PictureOutlined />}
+                      size={24}
+                      shape="square"
+                    />
+                    <span>
+                      {displayProduct?.sku} - {displayProduct?.name}
+                      {isExport && ` (Tồn: ${product.quantity})`}
+                    </span>
+                  </div>
                 </Select.Option>
               );
             })}

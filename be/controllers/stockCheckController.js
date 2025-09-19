@@ -29,7 +29,7 @@ const createStockCheck = async (req, res) => {
     await stockCheck.save();
     
     const populatedStockCheck = await StockCheck.findById(stockCheck._id)
-      .populate('productId', 'sku name unit')
+      .populate('productId')
       .populate('createdBy', 'fullName employeeCode');
 
     res.status(201).json({ success: true, data: populatedStockCheck });
@@ -42,10 +42,11 @@ const createStockCheck = async (req, res) => {
 const getAllStockChecks = async (req, res) => {
   try {
     const stockChecks = await StockCheck.find()
-      .populate('productId', 'sku name unit')
+      .populate('productId')
       .populate('createdBy', 'fullName employeeCode')
       .populate('approvedBy', 'fullName employeeCode')
       .sort({ createdAt: -1 });
+
 
     res.json({ success: true, data: stockChecks });
   } catch (error) {
@@ -63,7 +64,7 @@ const approveStockCheck = async (req, res) => {
         approvedBy: req.user._id
       },
       { new: true }
-    ).populate('productId', 'sku name unit');
+    ).populate('productId');
 
     if (!stockCheck) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy phiếu kiểm kê' });

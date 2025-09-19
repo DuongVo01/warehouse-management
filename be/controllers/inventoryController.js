@@ -92,7 +92,7 @@ const exportInventory = async (req, res) => {
 const getInventoryBalance = async (req, res) => {
   try {
     const balances = await InventoryBalance.find()
-      .populate('productId', 'sku name unit costPrice salePrice expiryDate location isActive')
+      .populate('productId')
       .sort({ lastUpdated: -1 });
     
     res.json({ success: true, data: balances });
@@ -122,7 +122,7 @@ const updateInventoryBalance = async (productId, quantityChange) => {
 const getStats = async (req, res) => {
   try {
     const balances = await InventoryBalance.find()
-      .populate('productId', 'sku name unit costPrice salePrice expiryDate location isActive');
+      .populate('productId');
     
     // Tính toán thống kê
     const totalProducts = balances.length;
@@ -176,7 +176,7 @@ const getTransactions = async (req, res) => {
     }
     
     const transactions = await InventoryTransaction.find(filter)
-      .populate('productId', 'sku name unit costPrice salePrice')
+      .populate('productId')
       .populate('supplierId', 'name')
       .populate('createdBy', 'fullName employeeCode')
       .sort({ createdAt: -1 })
@@ -192,7 +192,7 @@ const getTransactions = async (req, res) => {
 const getStockChecks = async (req, res) => {
   try {
     const stockChecks = await StockCheck.find()
-      .populate('productId', 'sku name unit')
+      .populate('productId')
       .populate('createdBy', 'fullName employeeCode')
       .populate('approvedBy', 'fullName employeeCode')
       .sort({ createdAt: -1 });
@@ -237,7 +237,7 @@ const createStockCheck = async (req, res) => {
     await stockCheck.save();
     
     const populatedCheck = await StockCheck.findById(stockCheck._id)
-      .populate('productId', 'sku name unit')
+      .populate('productId')
       .populate('createdBy', 'fullName employeeCode');
 
     res.status(201).json({ success: true, data: populatedCheck });

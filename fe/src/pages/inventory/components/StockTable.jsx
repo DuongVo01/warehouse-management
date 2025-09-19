@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Table, Tag } from 'antd';
+import { Table, Tag, Avatar } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 import styles from './StockTable.module.css';
 
 const StockTable = ({ data, loading }) => {
@@ -21,6 +22,20 @@ const StockTable = ({ data, loading }) => {
     }));
   }, []);
   const columns = [
+    {
+      title: 'Hình ảnh',
+      dataIndex: ['productId', 'image'],
+      key: 'image',
+      width: 60,
+      render: (image) => (
+        <Avatar 
+          src={image ? `http://localhost:3000${image}` : null} 
+          icon={<PictureOutlined />}
+          size={32}
+          shape="square"
+        />
+      )
+    },
     { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
     { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'productName' },
     { title: 'Đơn vị', dataIndex: ['productId', 'unit'], key: 'unit' },

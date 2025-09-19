@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Button } from 'antd';
+import { Modal, Button, Avatar } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 
 const StockCheckDetailModal = ({ visible, onClose, stockCheck }) => {
   const getStatusText = (status) => {
@@ -25,7 +26,16 @@ const StockCheckDetailModal = ({ visible, onClose, stockCheck }) => {
       {stockCheck && (
         <div>
           <p><strong>Mã kiểm kê:</strong> {stockCheck.checkId}</p>
-          <p><strong>Sản phẩm:</strong> {stockCheck.productId?.sku} - {stockCheck.productId?.name}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <strong>Sản phẩm:</strong>
+            <Avatar 
+              src={stockCheck.productId?.image ? `http://localhost:3000${stockCheck.productId.image}` : null} 
+              icon={<PictureOutlined />}
+              size={32}
+              shape="square"
+            />
+            <span>{stockCheck.productId?.sku} - {stockCheck.productId?.name}</span>
+          </div>
           <p><strong>Số lượng hệ thống:</strong> {stockCheck.systemQuantity}</p>
           <p><strong>Số lượng thực tế:</strong> {stockCheck.actualQuantity}</p>
           <p><strong>Chênh lệch:</strong> {(stockCheck.actualQuantity || 0) - (stockCheck.systemQuantity || 0)}</p>

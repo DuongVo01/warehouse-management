@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Form, Select, Row, Col, InputNumber, Input, Button, Space } from 'antd';
+import { Modal, Form, Select, Row, Col, InputNumber, Input, Button, Space, Avatar } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 
 const StockCheckForm = ({ 
   visible, 
@@ -37,14 +38,26 @@ const StockCheckForm = ({
             placeholder="Chọn sản phẩm" 
             showSearch
             filterOption={(input, option) => {
-              const text = option.children || '';
-              return text.toString().toLowerCase().includes(input.toLowerCase());
+              const product = products.find(p => p._id === option.value);
+              if (product) {
+                const searchText = `${product.sku} ${product.name}`.toLowerCase();
+                return searchText.includes(input.toLowerCase());
+              }
+              return false;
             }}
             onChange={onProductChange}
           >
             {products.map(product => (
               <Select.Option key={product._id} value={product._id}>
-                {product.sku} - {product.name}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Avatar 
+                    src={product.image ? `http://localhost:3000${product.image}` : null} 
+                    icon={<PictureOutlined />}
+                    size={24}
+                    shape="square"
+                  />
+                  <span>{product.sku} - {product.name}</span>
+                </div>
               </Select.Option>
             ))}
           </Select>

@@ -1,6 +1,21 @@
-import { Tag } from 'antd';
+import { Tag, Avatar } from 'antd';
+import { PictureOutlined } from '@ant-design/icons';
 
 export const inventoryColumns = [
+  {
+    title: 'Hình ảnh',
+    dataIndex: ['productId', 'image'],
+    key: 'image',
+    width: 60,
+    render: (image) => (
+      <Avatar 
+        src={image ? `http://localhost:3000${image}` : null} 
+        icon={<PictureOutlined />}
+        size={32}
+        shape="square"
+      />
+    )
+  },
   { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
   { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'name' },
   { title: 'Đơn vị', dataIndex: ['productId', 'unit'], key: 'unit' },
@@ -66,6 +81,20 @@ export const transactionColumns = [
       );
     }
   },
+  {
+    title: 'Hình ảnh',
+    dataIndex: ['productId', 'image'],
+    key: 'image',
+    width: 60,
+    render: (image) => (
+      <Avatar 
+        src={image ? `http://localhost:3000${image}` : null} 
+        icon={<PictureOutlined />}
+        size={32}
+        shape="square"
+      />
+    )
+  },
   { title: 'Sản phẩm', key: 'product',
     render: (_, record) => `${record.productId?.sku} - ${record.productId?.name}` || '-'
   },
@@ -97,6 +126,20 @@ export const transactionColumns = [
 ];
 
 export const lowStockColumns = [
+  {
+    title: 'Hình ảnh',
+    dataIndex: ['productId', 'image'],
+    key: 'image',
+    width: 60,
+    render: (image) => (
+      <Avatar 
+        src={image ? `http://localhost:3000${image}` : null} 
+        icon={<PictureOutlined />}
+        size={32}
+        shape="square"
+      />
+    )
+  },
   { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
   { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'name' },
   { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity',
@@ -106,6 +149,20 @@ export const lowStockColumns = [
 ];
 
 export const expiringColumns = [
+  {
+    title: 'Hình ảnh',
+    dataIndex: ['productId', 'image'],
+    key: 'image',
+    width: 60,
+    render: (image) => (
+      <Avatar 
+        src={image ? `http://localhost:3000${image}` : null} 
+        icon={<PictureOutlined />}
+        size={32}
+        shape="square"
+      />
+    )
+  },
   { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
   { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'name' },
   { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity' },
