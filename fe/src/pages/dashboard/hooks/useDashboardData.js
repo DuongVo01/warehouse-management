@@ -10,6 +10,7 @@ export const useDashboardData = () => {
   });
   const [dailyTransactions, setDailyTransactions] = useState([]);
   const [inventoryTrend, setInventoryTrend] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadStats = async () => {
@@ -28,9 +29,10 @@ export const useDashboardData = () => {
 
   const loadChartData = async () => {
     try {
-      const [transactionsRes, trendRes] = await Promise.all([
+      const [transactionsRes, trendRes, recentRes] = await Promise.all([
         inventoryAPI.getDailyTransactions({ days: 30 }),
-        inventoryAPI.getInventoryTrend({ days: 30 })
+        inventoryAPI.getInventoryTrend({ days: 30 }),
+        inventoryAPI.getTransactions({ limit: 10 })
       ]);
       
       if (transactionsRes.data.success) {
@@ -39,6 +41,10 @@ export const useDashboardData = () => {
       
       if (trendRes.data.success) {
         setInventoryTrend(trendRes.data.data);
+      }
+      
+      if (recentRes.data.success) {
+        setRecentTransactions(recentRes.data.data);
       }
     } catch (error) {
       console.error('Error loading chart data:', error);
@@ -54,6 +60,7 @@ export const useDashboardData = () => {
     stats,
     dailyTransactions,
     inventoryTrend,
+    recentTransactions,
     loading
   };
 };
