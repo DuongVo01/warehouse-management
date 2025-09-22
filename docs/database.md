@@ -21,6 +21,7 @@
   role: String (enum: ['Admin', 'Staff', 'Accountant']),
   email: String (required, unique, lowercase),
   phone: String (optional),
+  avatar: String (optional), // Path to uploaded avatar image
   isActive: Boolean (default: true),
   createdAt: Date (auto),
   updatedAt: Date (auto)
@@ -38,6 +39,7 @@
   salePrice: Number (required),
   expiryDate: Date (optional),
   location: String (optional), // Vị trí kệ
+  image: String (optional), // Path to uploaded product image
   isActive: Boolean (default: true),
   createdAt: Date (auto),
   updatedAt: Date (auto)
@@ -124,15 +126,15 @@
 ```javascript
 // Get transactions with product and user info
 InventoryTransaction.find()
-  .populate('productId', 'sku name unit')
+  .populate('productId', 'sku name unit image')
   .populate('supplierId', 'name')
-  .populate('createdBy', 'fullName employeeCode')
+  .populate('createdBy', 'fullName employeeCode avatar')
 
 // Get stock checks with related data
 StockCheck.find()
-  .populate('productId', 'sku name unit')
-  .populate('createdBy', 'fullName employeeCode')
-  .populate('approvedBy', 'fullName employeeCode')
+  .populate('productId', 'sku name unit image')
+  .populate('createdBy', 'fullName employeeCode avatar')
+  .populate('approvedBy', 'fullName employeeCode avatar')
 ```
 
 ---
@@ -268,7 +270,7 @@ const approveStockCheck = async (stockCheckId, userId) => {
 ```javascript
 // Get low stock products
 InventoryBalance.find({ quantity: { $lte: 10 } })
-  .populate('productId', 'sku name unit');
+  .populate('productId', 'sku name unit image');
 
 // Get expiring products (next 30 days)
 const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
@@ -283,7 +285,16 @@ InventoryTransaction.find({
     $gte: startDate,
     $lte: endDate
   }
-}).populate('productId supplierId createdBy');
+}).populate({
+  path: 'productId',
+  select: 'sku name unit image'
+}).populate({
+  path: 'supplierId', 
+  select: 'name'
+}).populate({
+  path: 'createdBy',
+  select: 'fullName employeeCode avatar'
+});
 ```
 
 ### 7.2. Aggregation Pipelines
@@ -328,16 +339,50 @@ InventoryBalance.aggregate([
 
 ---
 
-## 9. Performance Considerations
+---
 
-### 9.1. Optimization Techniques
+## 9. File Storage & Images
+
+### 9.1. Image Storage Strategy
+- **Product Images**: Stored in `/uploads/products/` directory
+- **User Avatars**: Stored in `/uploads/avatars/` directory
+- **File Naming**: UUID-based naming to avoid conflicts
+- **Supported Formats**: JPG, PNG, GIF (max 5MB)
+
+### 9.2. Image URL Structure
+```javascript
+// Product image URL
+`http://localhost:5000/uploads/products/${filename}`
+
+// User avatar URL  
+`http://localhost:5000/uploads/avatars/${filename}`
+
+// Frontend display
+<Avatar src={`http://localhost:5000${user.avatar}`} />
+<Avatar src={`http://localhost:5000${product.image}`} />
+```
+
+### 9.3. Image Integration Points
+- **Product Management**: Upload/display in ProductTable, ProductForm
+- **User Management**: Upload/display in UserTable, Profile
+- **Inventory Operations**: Display in Import/Export forms and tables
+- **Reports**: Show images in all report types
+- **Dashboard**: Display in recent transactions and alerts
+
+---
+
+## 10. Performance Considerations
+
+### 10.1. Optimization Techniques
 - Proper indexing on frequently queried fields
 - Pagination for large datasets
 - Lean queries when full documents not needed
 - Connection pooling for concurrent requests
+- Image optimization and caching
 
-### 9.2. Monitoring
+### 10.2. Monitoring
 - Query performance monitoring
 - Index usage statistics
 - Database size and growth tracking
 - Connection pool metrics
+- File storage usage tracking

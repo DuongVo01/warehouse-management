@@ -374,8 +374,8 @@ Product.find()
 
 ### 7.1. Development Environment
 ```
-Frontend: http://localhost:3001 (React Dev Server)
-Backend:  http://localhost:3000 (Node.js + Express)
+Frontend: http://localhost:3000 (React Dev Server)
+Backend:  http://localhost:5000 (Node.js + Express)
 Database: mongodb://localhost:27017/warehouse-management
 ```
 
