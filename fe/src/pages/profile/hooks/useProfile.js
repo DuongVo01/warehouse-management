@@ -45,7 +45,7 @@ export const useProfile = () => {
         
         // Cập nhật avatar URL
         if (userData.avatar) {
-          setAvatarUrl(`http://localhost:3000${userData.avatar}`);
+          setAvatarUrl(`http://localhost:5000${userData.avatar}`);
         } else {
           setAvatarUrl('');
         }
