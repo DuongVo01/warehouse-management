@@ -88,8 +88,32 @@ const approveStockCheck = async (req, res) => {
   }
 };
 
+// Từ chối kiểm kê
+const rejectStockCheck = async (req, res) => {
+  try {
+    const stockCheck = await StockCheck.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: 'Rejected',
+        approvedBy: req.user._id
+      },
+      { new: true }
+    ).populate('productId');
+
+    if (!stockCheck) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy phiếu kiểm kê' });
+    }
+
+    res.json({ success: true, data: stockCheck });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createStockCheck,
   getAllStockChecks,
-  approveStockCheck
+  approveStockCheck,
+  rejectStockCheck,
+  getStockChecks: getAllStockChecks
 };
