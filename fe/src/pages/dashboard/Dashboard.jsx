@@ -5,9 +5,10 @@ import StatsCards from './components/StatsCards';
 import TransactionChart from './components/TransactionChart';
 import InventoryTrendChart from './components/InventoryTrendChart';
 import RecentTransactions from './components/RecentTransactions';
+import AlertsTable from './components/AlertsTable';
 
 const Dashboard = () => {
-  const { stats, dailyTransactions, inventoryTrend, recentTransactions, loading } = useDashboardData();
+  const { stats, dailyTransactions, inventoryTrend, recentTransactions, lowStockItems, expiringItems, loading } = useDashboardData();
 
   return (
     <div>
@@ -27,8 +28,15 @@ const Dashboard = () => {
       </Row>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={24}>
+        <Col span={12}>
           <RecentTransactions transactions={recentTransactions} loading={loading} />
+        </Col>
+        <Col span={12}>
+          <AlertsTable 
+            lowStockItems={lowStockItems} 
+            expiringItems={expiringItems} 
+            loading={loading} 
+          />
         </Col>
       </Row>
     </div>
