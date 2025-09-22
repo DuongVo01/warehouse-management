@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,6 +24,7 @@ export const inventoryAPI = {
   
   // Stock balance
   getBalance: (params) => api.get('/inventory/balance', { params }),
+  getInventoryTrend: (params) => api.get('/inventory/trend', { params }),
   
   // Stock check
   getStockChecks: (params) => api.get('/inventory/stock-checks', { params }),
@@ -33,7 +34,9 @@ export const inventoryAPI = {
   
   // Stats
   getStats: () => api.get('/inventory/stats'),
+  getChartData: (params) => api.get('/inventory/chart-data', { params }),
   
   // Transactions (if needed)
-  getTransactions: (params) => api.get('/inventory/transactions', { params })
+  getTransactions: (params) => api.get('/inventory/transactions', { params }),
+  getDailyTransactions: (params) => api.get('/inventory/daily-transactions', { params })
 };

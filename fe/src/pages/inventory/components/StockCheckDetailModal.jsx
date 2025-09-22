@@ -29,7 +29,7 @@ const StockCheckDetailModal = ({ visible, onClose, stockCheck }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <strong>Sản phẩm:</strong>
             <Avatar 
-              src={stockCheck.productId?.image ? `http://localhost:3000${stockCheck.productId.image}` : null} 
+              src={stockCheck.productId?.image ? `http://localhost:5000${stockCheck.productId.image}` : null} 
               icon={<PictureOutlined />}
               size={32}
               shape="square"

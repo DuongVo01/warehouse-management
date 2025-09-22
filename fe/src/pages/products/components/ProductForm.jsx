@@ -8,7 +8,7 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
 
   useEffect(() => {
     if (editingProduct?.image) {
-      setImageUrl(`http://localhost:3000${editingProduct.image}`);
+      setImageUrl(`http://localhost:5000${editingProduct.image}`);
     } else {
       setImageUrl('');
     }

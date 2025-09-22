@@ -43,7 +43,7 @@ const ProductSelector = ({
                 <Select.Option key={product._id} value={product._id}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Avatar 
-                      src={displayProduct?.image ? `http://localhost:3000${displayProduct.image}` : null} 
+                      src={displayProduct?.image ? `http://localhost:5000${displayProduct.image}` : null} 
                       icon={<PictureOutlined />}
                       size={24}
                       shape="square"

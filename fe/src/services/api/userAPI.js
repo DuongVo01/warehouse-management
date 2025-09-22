@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const userAPI = {
   // Lấy danh sách người dùng
   getUsers: (params = {}) => {
-    return axios.get(`${API_BASE_URL}/users`, { 
+    return axios.get(`${API_URL}/users`, { 
       params,
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -15,7 +15,7 @@ const userAPI = {
 
   // Tạo người dùng mới
   createUser: (data) => {
-    return axios.post(`${API_BASE_URL}/users`, data, {
+    return axios.post(`${API_URL}/users`, data, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -24,7 +24,7 @@ const userAPI = {
 
   // Cập nhật người dùng
   updateUser: (id, data) => {
-    return axios.put(`${API_BASE_URL}/users/${id}`, data, {
+    return axios.put(`${API_URL}/users/${id}`, data, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -33,7 +33,7 @@ const userAPI = {
 
   // Xóa người dùng
   deleteUser: (id) => {
-    return axios.delete(`${API_BASE_URL}/users/${id}`, {
+    return axios.delete(`${API_URL}/users/${id}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -42,7 +42,7 @@ const userAPI = {
 
   // Cập nhật profile cá nhân
   updateProfile: (id, data) => {
-    return axios.put(`${API_BASE_URL}/users/${id}/profile`, data, {
+    return axios.put(`${API_URL}/users/${id}/profile`, data, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
@@ -51,7 +51,7 @@ const userAPI = {
 
   // Upload avatar cho chính mình
   uploadAvatar: (formData) => {
-    return axios.post(`${API_BASE_URL}/users/avatar`, formData, {
+    return axios.post(`${API_URL}/users/avatar`, formData, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'multipart/form-data'
@@ -61,7 +61,7 @@ const userAPI = {
 
   // Upload avatar cho user khác (chỉ Admin)
   uploadAvatarForUser: (userId, formData) => {
-    return axios.post(`${API_BASE_URL}/users/${userId}/avatar`, formData, {
+    return axios.post(`${API_URL}/users/${userId}/avatar`, formData, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'multipart/form-data'

@@ -38,7 +38,7 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
       width: 80,
       render: (image) => (
         <Avatar 
-          src={image ? `http://localhost:3000${image}` : null} 
+          src={image ? `http://localhost:5000${image}` : null} 
           icon={<PictureOutlined />}
           size={40}
           shape="square"

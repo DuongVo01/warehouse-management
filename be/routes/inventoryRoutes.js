@@ -19,6 +19,10 @@ router.get('/stats', auth, inventoryController.getStats);
 // API giao dịch
 router.get('/transactions', auth, inventoryController.getTransactions);
 
+// API dữ liệu biểu đồ
+router.get('/daily-transactions', auth, inventoryController.getDailyTransactions);
+router.get('/trend', auth, inventoryController.getInventoryTrend);
+
 // API kiểm kê kho
 router.get('/stock-checks', auth, inventoryController.getStockChecks);
 router.post('/stock-checks', auth, role(['Admin', 'Staff']), inventoryController.createStockCheck);

@@ -57,7 +57,7 @@ const AppHeader = ({ collapsed, onToggle, currentUser, userRole, onLogout, onPro
         </div>
         <Dropdown overlay={userMenu} placement="bottomRight">
           <Avatar 
-            src={currentUser?.avatar ? `http://localhost:3000${currentUser.avatar}` : null}
+            src={currentUser?.avatar ? `http://localhost:5000${currentUser.avatar}` : null}
             icon={<UserOutlined />} 
             style={{ cursor: 'pointer' }} 
           />

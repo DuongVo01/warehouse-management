@@ -14,7 +14,7 @@ const InventoryTable = ({ items, onRemove, showUnitPrice = false }) => {
         const productImage = image || record.productId?.image || record.productImage;
         return (
           <Avatar 
-            src={productImage ? `http://localhost:3000${productImage}` : null} 
+            src={productImage ? `http://localhost:5000${productImage}` : null} 
             icon={<PictureOutlined />}
             size={32}
             shape="square"

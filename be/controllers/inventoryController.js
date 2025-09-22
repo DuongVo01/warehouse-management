@@ -151,6 +151,101 @@ const getStats = async (req, res) => {
   }
 };
 
+// Lấy dữ liệu biểu đồ giao dịch hàng ngày
+const getDailyTransactions = async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    
+    const transactions = await InventoryTransaction.find({
+      createdAt: { $gte: startDate }
+    }).populate('productId', 'sku name');
+    
+    // Nhóm theo ngày
+    const dailyData = {};
+    transactions.forEach(transaction => {
+      const date = transaction.createdAt.toISOString().split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { date, import: 0, export: 0 };
+      }
+      
+      if (transaction.transactionType === 'Import') {
+        dailyData[date].import += Math.abs(transaction.quantity);
+      } else {
+        dailyData[date].export += Math.abs(transaction.quantity);
+      }
+    });
+    
+    const result = Object.values(dailyData).sort((a, b) => new Date(a.date) - new Date(b.date));
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lấy xu hướng giá trị tồn kho
+const getInventoryTrend = async (req, res) => {
+  try {
+    // Tìm giao dịch đầu tiên để xác định ngày bắt đầu
+    const firstTransaction = await InventoryTransaction.findOne().sort({ createdAt: 1 });
+    
+    if (!firstTransaction) {
+      return res.json({ success: true, data: [] });
+    }
+    
+    const startDate = new Date(firstTransaction.createdAt.toISOString().split('T')[0]);
+    const endDate = new Date();
+    const trendData = [];
+    
+    // Lấy tất cả giao dịch để tính toán lũy kế
+    const allTransactions = await InventoryTransaction.find()
+      .populate('productId', 'costPrice')
+      .sort({ createdAt: 1 });
+    
+    // Tính giá trị tồn kho cho từng ngày
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Tính tồn kho tại cuối ngày này
+      const productBalances = {};
+      
+      // Duyệt qua tất cả giao dịch đến cuối ngày này
+      allTransactions.forEach(transaction => {
+        if (transaction.createdAt <= endOfDay) {
+          const productId = transaction.productId._id.toString();
+          if (!productBalances[productId]) {
+            productBalances[productId] = {
+              quantity: 0,
+              costPrice: transaction.productId.costPrice || 0
+            };
+          }
+          productBalances[productId].quantity += transaction.quantity;
+        }
+      });
+      
+      // Tính tổng giá trị
+      const totalValue = Object.values(productBalances).reduce((sum, item) => {
+        return sum + (Math.max(0, item.quantity) * item.costPrice);
+      }, 0);
+      
+      trendData.push({
+        date: dateStr,
+        value: Math.round(totalValue)
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    res.json({ success: true, data: trendData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Lấy danh sách giao dịch
 const getTransactions = async (req, res) => {
   try {
@@ -325,6 +420,8 @@ module.exports = {
   getInventoryBalance,
   getStats,
   getTransactions,
+  getDailyTransactions,
+  getInventoryTrend,
   getStockChecks,
   createStockCheck,
   approveStockCheck,

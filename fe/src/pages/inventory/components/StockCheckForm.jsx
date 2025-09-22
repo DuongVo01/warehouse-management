@@ -51,7 +51,7 @@ const StockCheckForm = ({
               <Select.Option key={product._id} value={product._id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Avatar 
-                    src={product.image ? `http://localhost:3000${product.image}` : null} 
+                    src={product.image ? `http://localhost:5000${product.image}` : null} 
                     icon={<PictureOutlined />}
                     size={24}
                     shape="square"

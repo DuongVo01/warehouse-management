@@ -49,9 +49,10 @@ const startServer = async () => {
     }
 
     // Start server
-    app.listen(3000, () => {
-      logger.info('Server đang chạy trên port 3000');
-      logger.info('API endpoint: http://localhost:3000/api');
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      logger.info(`Server đang chạy trên port ${PORT}`);
+      logger.info(`API endpoint: http://localhost:${PORT}/api`);
     });
   } catch (error) {
     logger.error('Lỗi khởi động server:', error);

@@ -29,7 +29,7 @@ const StockTable = ({ data, loading }) => {
       width: 60,
       render: (image) => (
         <Avatar 
-          src={image ? `http://localhost:3000${image}` : null} 
+          src={image ? `http://localhost:5000${image}` : null} 
           icon={<PictureOutlined />}
           size={32}
           shape="square"

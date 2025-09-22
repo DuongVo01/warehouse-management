@@ -37,7 +37,7 @@ const StockCheckTable = ({
       width: 60,
       render: (image, record) => (
         <Avatar 
-          src={record.productId?.image ? `http://localhost:3000${record.productId.image}` : null} 
+          src={record.productId?.image ? `http://localhost:5000${record.productId.image}` : null} 
           icon={<PictureOutlined />}
           size={32}
           shape="square"

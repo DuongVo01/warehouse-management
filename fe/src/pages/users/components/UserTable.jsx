@@ -30,7 +30,7 @@ const UserTable = ({ users, loading, onEdit, onDelete, currentUser }) => {
       width: 80,
       render: (avatar, record) => (
         <Avatar 
-          src={avatar ? `http://localhost:3000${avatar}` : null} 
+          src={avatar ? `http://localhost:5000${avatar}` : null} 
           icon={<UserOutlined />}
           size={40}
         />

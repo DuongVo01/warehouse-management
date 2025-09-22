@@ -74,7 +74,9 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="profile" element={<Profile />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </ConfigProvider>
