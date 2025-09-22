@@ -7,6 +7,9 @@ const role = require('../middleware/role');
 // API danh sách nhà cung cấp
 router.get('/', auth, supplierController.getAllSuppliers);
 
+// API danh sách nhà cung cấp đang hoạt động
+router.get('/active', auth, supplierController.getActiveSuppliers);
+
 // API tạo nhà cung cấp
 router.post('/', auth, role(['Admin']), supplierController.createSupplier);
 

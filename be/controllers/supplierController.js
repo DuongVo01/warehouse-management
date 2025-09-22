@@ -42,6 +42,16 @@ const getAllSuppliers = async (req, res) => {
   }
 };
 
+// Lấy suppliers đang hoạt động
+const getActiveSuppliers = async (req, res) => {
+  try {
+    const suppliers = await Supplier.find({ isActive: true }).sort({ name: 1 });
+    res.json({ success: true, data: suppliers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Cập nhật supplier
 const updateSupplier = async (req, res) => {
   try {
@@ -71,6 +81,7 @@ const deleteSupplier = async (req, res) => {
 module.exports = {
   createSupplier,
   getAllSuppliers,
+  getActiveSuppliers,
   updateSupplier,
   deleteSupplier
 };

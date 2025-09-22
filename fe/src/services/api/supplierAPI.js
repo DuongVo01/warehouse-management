@@ -13,6 +13,15 @@ const supplierAPI = {
     });
   },
 
+  // Lấy danh sách nhà cung cấp đang hoạt động
+  getActiveSuppliers: () => {
+    return axios.get(`${API_URL}/suppliers/active`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+  },
+
   // Tạo nhà cung cấp mới
   createSupplier: (data) => {
     return axios.post(`${API_URL}/suppliers`, data, {

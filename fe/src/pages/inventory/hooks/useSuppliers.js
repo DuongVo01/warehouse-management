@@ -7,7 +7,7 @@ export const useSuppliers = () => {
 
   const loadSuppliers = async () => {
     try {
-      const response = await supplierAPI.getSuppliers();
+      const response = await supplierAPI.getActiveSuppliers();
       if (response.data.success) {
         setSuppliers(response.data.data || []);
       }
