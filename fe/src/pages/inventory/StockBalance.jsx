@@ -46,6 +46,7 @@ const StockBalance = () => {
             <Select.Option value="low-stock">Sắp hết</Select.Option>
             <Select.Option value="medium-stock">Sắp cạn kiệt</Select.Option>
             <Select.Option value="expiring">Sắp hết hạn</Select.Option>
+            <Select.Option value="expired">Đã hết hạn</Select.Option>
             <Select.Option value="normal">Bình thường</Select.Option>
           </Select>
           <Button icon={<ReloadOutlined />} onClick={loadStockBalance}>

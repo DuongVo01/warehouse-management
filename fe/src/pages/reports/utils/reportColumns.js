@@ -42,16 +42,27 @@ export const inventoryColumns = [
     render: (_, record) => {
       const quantity = record.quantity;
       const expiryDate = record.productId?.expiryDate;
+      const now = new Date();
+      const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
       
+      // Kiểm tra hết hạn trước
+      if (expiryDate && new Date(expiryDate) < now) {
+        return <Tag color="red">Đã hết hạn</Tag>;
+      }
+      
+      // Kiểm tra số lượng
       if (quantity <= 10) {
         return <Tag color="red">Sắp hết</Tag>;
       }
       if (quantity <= 50) {
         return <Tag color="orange">Sắp cạn kiệt</Tag>;
       }
-      if (expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000)) {
+      
+      // Kiểm tra sắp hết hạn (chưa hết hạn nhưng sắp hết)
+      if (expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow) {
         return <Tag color="volcano">Sắp hết hạn</Tag>;
       }
+      
       return <Tag color="green">Bình thường</Tag>;
     }
   }
@@ -178,7 +189,36 @@ export const expiringColumns = [
         {new Date(date).toLocaleDateString('vi-VN')}
       </span>
     )
-  }
+  },
+  { title: 'Vị trí', dataIndex: ['productId', 'location'], key: 'location' }
+];
+
+export const expiredColumns = [
+  {
+    title: 'Hình ảnh',
+    dataIndex: ['productId', 'image'],
+    key: 'image',
+    width: 60,
+    render: (image) => (
+      <Avatar 
+        src={image ? `http://localhost:5000${image}` : null} 
+        icon={<PictureOutlined />}
+        size={32}
+        shape="square"
+      />
+    )
+  },
+  { title: 'Mã SP', dataIndex: ['productId', 'sku'], key: 'sku' },
+  { title: 'Tên sản phẩm', dataIndex: ['productId', 'name'], key: 'name' },
+  { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity' },
+  { title: 'Hạn sử dụng', dataIndex: ['productId', 'expiryDate'], key: 'expiry',
+    render: (date) => (
+      <span style={{ color: '#cf1322', fontWeight: 'bold' }}>
+        {new Date(date).toLocaleDateString('vi-VN')}
+      </span>
+    )
+  },
+  { title: 'Vị trí', dataIndex: ['productId', 'location'], key: 'location' }
 ];
 
 export const getColumnsByType = (reportType) => {
@@ -187,6 +227,7 @@ export const getColumnsByType = (reportType) => {
     case 'transactions': return transactionColumns;
     case 'lowstock': return lowStockColumns;
     case 'expiring': return expiringColumns;
+    case 'expired': return expiredColumns;
     default: return inventoryColumns;
   }
 };

@@ -61,11 +61,25 @@ export const useReports = () => {
           response = await inventoryAPI.getBalance({ limit: 100 });
           // Lọc chỉ lấy sản phẩm sắp hết hạn
           if (response.data.success) {
+            const now = new Date();
+            const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
             const expiringData = response.data.data.filter(item => {
               const expiryDate = item.productId?.expiryDate;
-              return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+              return expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow;
             });
             response.data.data = expiringData;
+          }
+          break;
+        case 'expired':
+          response = await inventoryAPI.getBalance({ limit: 100 });
+          // Lọc chỉ lấy sản phẩm đã hết hạn
+          if (response.data.success) {
+            const now = new Date();
+            const expiredData = response.data.data.filter(item => {
+              const expiryDate = item.productId?.expiryDate;
+              return expiryDate && new Date(expiryDate) < now;
+            });
+            response.data.data = expiredData;
           }
           break;
         default:

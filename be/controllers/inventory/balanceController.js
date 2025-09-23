@@ -28,16 +28,25 @@ const getStats = async (req, res) => {
     
     const lowStockCount = balances.filter(item => item.quantity <= 10).length;
     
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
+    
+    const expiredCount = balances.filter(item => {
+      const expiryDate = item.productId?.expiryDate;
+      return expiryDate && new Date(expiryDate) < now;
+    }).length;
+    
     const expiringCount = balances.filter(item => {
       const expiryDate = item.productId?.expiryDate;
-      return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+      return expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow;
     }).length;
     
     const stats = {
       totalProducts,
       totalValue,
       lowStockCount,
-      expiringCount
+      expiringCount,
+      expiredCount
     };
     
     res.json({ success: true, data: stats });

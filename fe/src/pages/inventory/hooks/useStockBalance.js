@@ -12,7 +12,8 @@ export const useStockBalance = () => {
     totalProducts: 0,
     totalQuantity: 0,
     lowStockCount: 0,
-    expiringCount: 0
+    expiringCount: 0,
+    expiredCount: 0
   });
 
   const loadStockBalance = async () => {
@@ -56,15 +57,20 @@ export const useStockBalance = () => {
         const quantity = item.quantity;
         const expiryDate = item.productId?.expiryDate;
         
+        const now = new Date();
+        const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
+        
         switch (filterStatus) {
           case 'low-stock':
             return quantity <= 10;
           case 'medium-stock':
             return quantity > 10 && quantity <= 50;
           case 'expiring':
-            return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+            return expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow;
+          case 'expired':
+            return expiryDate && new Date(expiryDate) < now;
           case 'normal':
-            return quantity > 50 && (!expiryDate || new Date(expiryDate) > new Date(Date.now() + 30*24*60*60*1000));
+            return quantity > 50 && (!expiryDate || new Date(expiryDate) > thirtyDaysFromNow);
           default:
             return true;
         }
@@ -75,13 +81,20 @@ export const useStockBalance = () => {
     
     const totalProducts = filtered.length;
     const totalQuantity = filtered.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
+    
     const lowStockCount = filtered.filter(item => item.quantity <= 10).length;
+    const expiredCount = filtered.filter(item => {
+      const expiryDate = item.productId?.expiryDate;
+      return expiryDate && new Date(expiryDate) < now;
+    }).length;
     const expiringCount = filtered.filter(item => {
       const expiryDate = item.productId?.expiryDate;
-      return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+      return expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow;
     }).length;
     
-    setStats({ totalProducts, totalQuantity, lowStockCount, expiringCount });
+    setStats({ totalProducts, totalQuantity, lowStockCount, expiringCount, expiredCount });
   };
 
   useEffect(() => {

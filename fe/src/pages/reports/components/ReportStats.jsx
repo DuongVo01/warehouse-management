@@ -5,7 +5,7 @@ import { BarChartOutlined, RiseOutlined, WarningOutlined } from '@ant-design/ico
 const ReportStats = ({ stats }) => {
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
-      <Col span={6}>
+      <Col span={4.8}>
         <Card>
           <Statistic
             title="Tổng sản phẩm"
@@ -14,7 +14,7 @@ const ReportStats = ({ stats }) => {
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={4.8}>
         <Card>
           <Statistic
             title="Tổng giá trị kho"
@@ -25,7 +25,7 @@ const ReportStats = ({ stats }) => {
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={4.8}>
         <Card>
           <Statistic
             title="Sản phẩm sắp hết"
@@ -35,13 +35,23 @@ const ReportStats = ({ stats }) => {
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={4.8}>
         <Card>
           <Statistic
             title="Sản phẩm sắp hết hạn"
             value={stats.expiringCount}
             prefix={<WarningOutlined />}
             valueStyle={{ color: '#fa8c16' }}
+          />
+        </Card>
+      </Col>
+      <Col span={4.8}>
+        <Card>
+          <Statistic
+            title="Sản phẩm đã hết hạn"
+            value={stats.expiredCount || 0}
+            prefix={<WarningOutlined />}
+            valueStyle={{ color: '#cf1322' }}
           />
         </Card>
       </Col>

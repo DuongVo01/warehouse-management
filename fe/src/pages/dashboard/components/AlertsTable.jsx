@@ -4,7 +4,7 @@ import { PictureOutlined, ExclamationCircleOutlined, WarningOutlined } from '@an
 
 const { TabPane } = Tabs;
 
-const AlertsTable = ({ lowStockItems, expiringItems, loading }) => {
+const AlertsTable = ({ lowStockItems, expiringItems, expiredItems, loading }) => {
   const lowStockColumns = [
     {
       title: 'Hình ảnh',
@@ -155,6 +155,26 @@ const AlertsTable = ({ lowStockItems, expiringItems, loading }) => {
             size="small"
             locale={{
               emptyText: 'Không có sản phẩm sắp hết hạn'
+            }}
+          />
+        </TabPane>
+        <TabPane 
+          tab={
+            <span>
+              <WarningOutlined style={{ color: '#cf1322' }} />
+              Đã hết hạn ({expiredItems.length})
+            </span>
+          } 
+          key="expired"
+        >
+          <Table
+            columns={expiringColumns}
+            dataSource={expiredItems}
+            rowKey="_id"
+            pagination={{ pageSize: 5, showSizeChanger: false }}
+            size="small"
+            locale={{
+              emptyText: 'Không có sản phẩm đã hết hạn'
             }}
           />
         </TabPane>

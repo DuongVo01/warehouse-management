@@ -8,7 +8,7 @@ import RecentTransactions from './components/RecentTransactions';
 import AlertsTable from './components/AlertsTable';
 
 const Dashboard = () => {
-  const { stats, dailyTransactions, inventoryTrend, recentTransactions, lowStockItems, expiringItems, loading } = useDashboardData();
+  const { stats, dailyTransactions, inventoryTrend, recentTransactions, lowStockItems, expiringItems, expiredItems, loading } = useDashboardData();
   
   // Lấy thông tin user role từ localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -40,7 +40,8 @@ const Dashboard = () => {
         <Col span={12}>
           <AlertsTable 
             lowStockItems={lowStockItems} 
-            expiringItems={expiringItems} 
+            expiringItems={expiringItems}
+            expiredItems={expiredItems}
             loading={loading} 
           />
         </Col>

@@ -9,7 +9,7 @@ import {
 
 const StatsCards = ({ stats, loading, userRole }) => {
   const isStaff = userRole === 'Staff';
-  const colSpan = isStaff ? 8 : 6; // Nếu là Staff thì chia 3 cột, không thì 4 cột
+  const colSpan = isStaff ? 6 : 4.8; // Nếu là Staff thì chia 4 cột, không thì 5 cột
   
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -52,6 +52,16 @@ const StatsCards = ({ stats, loading, userRole }) => {
             value={stats.expiringCount}
             prefix={<WarningOutlined />}
             valueStyle={{ color: '#fa8c16' }}
+          />
+        </Card>
+      </Col>
+      <Col span={colSpan}>
+        <Card loading={loading}>
+          <Statistic
+            title="Sản phẩm đã hết hạn"
+            value={stats.expiredCount || 0}
+            prefix={<WarningOutlined />}
+            valueStyle={{ color: '#cf1322' }}
           />
         </Card>
       </Col>

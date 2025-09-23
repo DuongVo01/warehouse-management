@@ -71,16 +71,27 @@ const StockTable = ({ data, loading }) => {
       render: (_, record) => {
         const quantity = record.quantity;
         const expiryDate = record.productId?.expiryDate;
+        const now = new Date();
+        const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
         
+        // Kiểm tra hết hạn trước
+        if (expiryDate && new Date(expiryDate) < now) {
+          return <Tag color="red">Đã hết hạn</Tag>;
+        }
+        
+        // Kiểm tra số lượng
         if (quantity <= 10) {
           return <Tag color="red">Sắp hết</Tag>;
         }
         if (quantity <= 50) {
           return <Tag color="orange">Sắp cạn kiệt</Tag>;
         }
-        if (expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000)) {
+        
+        // Kiểm tra sắp hết hạn (chưa hết hạn nhưng sắp hết)
+        if (expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow) {
           return <Tag color="volcano">Sắp hết hạn</Tag>;
         }
+        
         return <Tag color="green">Bình thường</Tag>;
       }
     }

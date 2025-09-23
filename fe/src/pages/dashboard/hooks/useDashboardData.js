@@ -6,13 +6,15 @@ export const useDashboardData = () => {
     totalProducts: 0,
     totalValue: 0,
     lowStockCount: 0,
-    expiringCount: 0
+    expiringCount: 0,
+    expiredCount: 0
   });
   const [dailyTransactions, setDailyTransactions] = useState([]);
   const [inventoryTrend, setInventoryTrend] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [expiringItems, setExpiringItems] = useState([]);
+  const [expiredItems, setExpiredItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadStats = async () => {
@@ -57,10 +59,20 @@ export const useDashboardData = () => {
         const lowStock = balances.filter(item => item.quantity <= 10);
         setLowStockItems(lowStock);
         
-        // Lọc sản phẩm sắp hết hạn
+        const now = new Date();
+        const thirtyDaysFromNow = new Date(Date.now() + 30*24*60*60*1000);
+        
+        // Lọc sản phẩm đã hết hạn
+        const expired = balances.filter(item => {
+          const expiryDate = item.productId?.expiryDate;
+          return expiryDate && new Date(expiryDate) < now;
+        });
+        setExpiredItems(expired);
+        
+        // Lọc sản phẩm sắp hết hạn (chưa hết hạn nhưng sắp hết trong 30 ngày)
         const expiring = balances.filter(item => {
           const expiryDate = item.productId?.expiryDate;
-          return expiryDate && new Date(expiryDate) <= new Date(Date.now() + 30*24*60*60*1000);
+          return expiryDate && new Date(expiryDate) >= now && new Date(expiryDate) <= thirtyDaysFromNow;
         });
         setExpiringItems(expiring);
       }
@@ -81,6 +93,7 @@ export const useDashboardData = () => {
     recentTransactions,
     lowStockItems,
     expiringItems,
+    expiredItems,
     loading
   };
 };
