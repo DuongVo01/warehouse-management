@@ -73,6 +73,18 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
       render: (price) => price ? `${price.toLocaleString()} VND` : '-',
     },
     {
+      title: 'Ngày sản xuất',
+      dataIndex: 'manufacturingDate',
+      key: 'manufacturingDate',
+      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+    },
+    {
+      title: 'Ngày hết hạn',
+      dataIndex: 'expiryDate',
+      key: 'expiryDate',
+      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+    },
+    {
       title: 'Vị trí',
       dataIndex: 'location',
       key: 'location',

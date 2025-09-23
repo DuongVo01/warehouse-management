@@ -144,7 +144,20 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
             Thông tin khác
           </h4>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
+              <Form.Item
+                name="manufacturingDate"
+                label="Ngày sản xuất"
+                style={{ marginBottom: '16px' }}
+              >
+                <DatePicker
+                  placeholder="Chọn ngày sản xuất"
+                  style={{ width: '100%' }}
+                  format="DD/MM/YYYY"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item
                 name="expiryDate"
                 label="Ngày hết hạn"
@@ -157,7 +170,7 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="location"
                 label="Vị trí"

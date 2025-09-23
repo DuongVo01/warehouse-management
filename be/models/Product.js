@@ -27,6 +27,9 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  manufacturingDate: {
+    type: Date
+  },
   expiryDate: {
     type: Date
   },

@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 // Tạo product mới
 const createProduct = async (req, res) => {
   try {
-    const { sku, name, unit, costPrice, salePrice, expiryDate, location } = req.body;
+    const { sku, name, unit, costPrice, salePrice, manufacturingDate, expiryDate, location } = req.body;
     
     if (!sku || !name || !unit || costPrice === undefined || salePrice === undefined) {
       return res.status(400).json({ 
@@ -18,6 +18,7 @@ const createProduct = async (req, res) => {
       unit,
       costPrice,
       salePrice,
+      manufacturingDate,
       expiryDate,
       location
     });

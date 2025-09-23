@@ -30,6 +30,7 @@ const ProductList = () => {
       unit: product.unit,
       costPrice: product.costPrice,
       salePrice: product.salePrice,
+      manufacturingDate: product.manufacturingDate ? dayjs(product.manufacturingDate) : null,
       expiryDate: product.expiryDate ? dayjs(product.expiryDate) : null,
       location: product.location
     });
@@ -50,6 +51,7 @@ const ProductList = () => {
         unit: values.unit,
         costPrice: values.costPrice,
         salePrice: values.salePrice,
+        manufacturingDate: values.manufacturingDate?.format('YYYY-MM-DD'),
         expiryDate: values.expiryDate?.format('YYYY-MM-DD'),
         location: values.location
       };
