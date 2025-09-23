@@ -38,5 +38,8 @@ export const inventoryAPI = {
   
   // Transactions (if needed)
   getTransactions: (params) => api.get('/inventory/transactions', { params }),
-  getDailyTransactions: (params) => api.get('/inventory/daily-transactions', { params })
+  getDailyTransactions: (params) => api.get('/inventory/daily-transactions', { params }),
+  
+  // Clear all data
+  clearAllData: () => api.delete('/inventory/clear-all')
 };

@@ -1,12 +1,13 @@
 const StockCheck = require('../models/StockCheck');
 const InventoryBalance = require('../models/InventoryBalance');
+const InventoryTransaction = require('../models/InventoryTransaction');
 
 // Tạo kiểm kê mới
 const createStockCheck = async (req, res) => {
   try {
-    const { productId, actualQty } = req.body;
+    const { productId, actualQuantity } = req.body;
     
-    if (!productId || actualQty === undefined) {
+    if (!productId || actualQuantity === undefined) {
       return res.status(400).json({ 
         success: false, 
         message: 'Thiếu thông tin bắt buộc' 
@@ -15,14 +16,12 @@ const createStockCheck = async (req, res) => {
 
     // Lấy số lượng hệ thống
     const balance = await InventoryBalance.findOne({ productId });
-    const systemQty = balance ? balance.quantity : 0;
-    const difference = actualQty - systemQty;
+    const systemQuantity = balance ? balance.quantity : 0;
 
     const stockCheck = new StockCheck({
       productId,
-      systemQty,
-      actualQty,
-      difference,
+      systemQuantity,
+      actualQuantity,
       createdBy: req.user._id
     });
 
@@ -70,16 +69,30 @@ const approveStockCheck = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy phiếu kiểm kê' });
     }
 
-    // Cập nhật tồn kho nếu có chênh lệch
+    // Cập nhật tồn kho và tạo giao dịch điều chỉnh nếu có chênh lệch
     if (stockCheck.difference !== 0) {
+      // Cập nhật tồn kho
       await InventoryBalance.findOneAndUpdate(
         { productId: stockCheck.productId },
         { 
-          quantity: stockCheck.actualQty,
+          quantity: stockCheck.actualQuantity,
           lastUpdated: new Date()
         },
         { upsert: true }
       );
+      
+      // Tạo giao dịch điều chỉnh
+      const transactionType = stockCheck.difference > 0 ? 'Import' : 'Export';
+      const adjustmentQuantity = Math.abs(stockCheck.difference);
+      
+      await InventoryTransaction.create({
+        productId: stockCheck.productId,
+        transactionType,
+        quantity: transactionType === 'Import' ? adjustmentQuantity : -adjustmentQuantity,
+        unitPrice: stockCheck.productId.costPrice || 0,
+        note: `Điều chỉnh tồn kho từ kiểm kê ${stockCheck.checkId}`,
+        createdBy: req.user._id
+      });
     }
 
     res.json({ success: true, data: stockCheck });

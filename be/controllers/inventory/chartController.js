@@ -1,4 +1,5 @@
 const InventoryTransaction = require('../../models/InventoryTransaction');
+const InventoryBalance = require('../../models/InventoryBalance');
 
 // Lấy dữ liệu biểu đồ giao dịch hàng ngày
 const getDailyTransactions = async (req, res) => {
@@ -88,7 +89,75 @@ const getInventoryTrend = async (req, res) => {
   }
 };
 
+// Đồng bộ tồn kho từ giao dịch
+const syncInventoryBalance = async (req, res) => {
+  try {
+    // Lấy tất cả giao dịch
+    const transactions = await InventoryTransaction.find()
+      .populate('productId', 'costPrice')
+      .sort({ createdAt: 1 });
+    
+    // Tính toán tồn kho cho từng sản phẩm
+    const productBalances = {};
+    
+    transactions.forEach(transaction => {
+      const productId = transaction.productId._id.toString();
+      if (!productBalances[productId]) {
+        productBalances[productId] = {
+          productId: transaction.productId._id,
+          quantity: 0
+        };
+      }
+      productBalances[productId].quantity += transaction.quantity;
+    });
+    
+    // Xóa tất cả balance cũ
+    await InventoryBalance.deleteMany({});
+    
+    // Tạo balance mới cho sản phẩm có tồn kho > 0
+    const balancesToCreate = Object.values(productBalances)
+      .filter(balance => balance.quantity > 0)
+      .map(balance => ({
+        productId: balance.productId,
+        quantity: balance.quantity,
+        lastUpdated: new Date()
+      }));
+    
+    if (balancesToCreate.length > 0) {
+      await InventoryBalance.insertMany(balancesToCreate);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `Đồng bộ thành công ${balancesToCreate.length} sản phẩm`,
+      data: balancesToCreate
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Xóa tất cả dữ liệu giao dịch và tồn kho
+const clearAllData = async (req, res) => {
+  try {
+    // Xóa tất cả giao dịch
+    await InventoryTransaction.deleteMany({});
+    
+    // Xóa tất cả tồn kho
+    await InventoryBalance.deleteMany({});
+    
+    res.json({ 
+      success: true, 
+      message: 'Xóa tất cả dữ liệu thành công'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getDailyTransactions,
-  getInventoryTrend
+  getInventoryTrend,
+  syncInventoryBalance,
+  clearAllData
 };

@@ -22,7 +22,8 @@ const getStats = async (req, res) => {
     const totalProducts = balances.length;
     const totalValue = balances.reduce((sum, item) => {
       const costPrice = item.productId?.costPrice || 0;
-      return sum + (item.quantity * costPrice);
+      const quantity = Math.max(0, item.quantity); // Chỉ tính số lượng dương
+      return sum + (quantity * costPrice);
     }, 0);
     
     const lowStockCount = balances.filter(item => item.quantity <= 10).length;

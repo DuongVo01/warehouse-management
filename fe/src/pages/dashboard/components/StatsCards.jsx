@@ -7,10 +7,13 @@ import {
   WarningOutlined 
 } from '@ant-design/icons';
 
-const StatsCards = ({ stats, loading }) => {
+const StatsCards = ({ stats, loading, userRole }) => {
+  const isStaff = userRole === 'Staff';
+  const colSpan = isStaff ? 8 : 6; // Nếu là Staff thì chia 3 cột, không thì 4 cột
+  
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
-      <Col span={6}>
+      <Col span={colSpan}>
         <Card loading={loading}>
           <Statistic
             title="Tổng sản phẩm"
@@ -19,18 +22,20 @@ const StatsCards = ({ stats, loading }) => {
           />
         </Card>
       </Col>
-      <Col span={6}>
-        <Card loading={loading}>
-          <Statistic
-            title="Tổng giá trị kho"
-            value={stats.totalValue || 0}
-            prefix={<DollarOutlined />}
-            formatter={(value) => `${Number(value).toLocaleString('vi-VN')} đ`}
-            valueStyle={{ color: '#3f8600' }}
-          />
-        </Card>
-      </Col>
-      <Col span={6}>
+      {!isStaff && (
+        <Col span={colSpan}>
+          <Card loading={loading}>
+            <Statistic
+              title="Tổng giá trị kho"
+              value={stats.totalValue || 0}
+              prefix={<DollarOutlined />}
+              formatter={(value) => `${Number(value).toLocaleString('vi-VN')} đ`}
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+        </Col>
+      )}
+      <Col span={colSpan}>
         <Card loading={loading}>
           <Statistic
             title="Sản phẩm sắp hết"
@@ -40,7 +45,7 @@ const StatsCards = ({ stats, loading }) => {
           />
         </Card>
       </Col>
-      <Col span={6}>
+      <Col span={colSpan}>
         <Card loading={loading}>
           <Statistic
             title="Sản phẩm sắp hết hạn"

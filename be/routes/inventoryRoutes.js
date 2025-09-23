@@ -23,6 +23,12 @@ router.get('/transactions', auth, inventoryController.getTransactions);
 router.get('/daily-transactions', auth, inventoryController.getDailyTransactions);
 router.get('/trend', auth, inventoryController.getInventoryTrend);
 
+// API đồng bộ tồn kho
+router.post('/sync-balance', auth, role(['Admin']), inventoryController.syncInventoryBalance);
+
+// API xóa tất cả dữ liệu
+router.delete('/clear-all', auth, role(['Admin']), inventoryController.clearAllData);
+
 // API kiểm kê kho
 router.get('/stock-checks', auth, inventoryController.getStockChecks);
 router.post('/stock-checks', auth, role(['Admin', 'Staff']), inventoryController.createStockCheck);

@@ -9,6 +9,10 @@ import AlertsTable from './components/AlertsTable';
 
 const Dashboard = () => {
   const { stats, dailyTransactions, inventoryTrend, recentTransactions, lowStockItems, expiringItems, loading } = useDashboardData();
+  
+  // Lấy thông tin user role từ localStorage
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = currentUser?.role;
 
   return (
     <div>
@@ -16,15 +20,17 @@ const Dashboard = () => {
         <h2>Tổng quan</h2>
       </div>
 
-      <StatsCards stats={stats} loading={loading} />
+      <StatsCards stats={stats} loading={loading} userRole={userRole} />
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={12}>
+        <Col span={userRole === 'Staff' ? 24 : 12}>
           <TransactionChart data={dailyTransactions} loading={loading} />
         </Col>
-        <Col span={12}>
-          <InventoryTrendChart data={inventoryTrend} loading={loading} />
-        </Col>
+        {userRole !== 'Staff' && (
+          <Col span={12}>
+            <InventoryTrendChart data={inventoryTrend} loading={loading} />
+          </Col>
+        )}
       </Row>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
