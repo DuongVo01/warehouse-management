@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, Button, Avatar } from 'antd';
-import { PictureOutlined } from '@ant-design/icons';
+import { Modal, Button, Avatar, Row, Col, Card, Tag, Divider, Typography, Space } from 'antd';
+import { PictureOutlined, ClockCircleOutlined, UserOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
 
 const StockCheckDetailModal = ({ visible, onClose, stockCheck }) => {
   const getStatusText = (status) => {
@@ -12,39 +14,139 @@ const StockCheckDetailModal = ({ visible, onClose, stockCheck }) => {
     }
   };
 
+  const getStatusConfig = (status) => {
+    switch (status) {
+      case 'Approved':
+        return { color: 'green', icon: <CheckCircleOutlined /> };
+      case 'Rejected':
+        return { color: 'red', icon: <CloseCircleOutlined /> };
+      case 'Pending':
+      default:
+        return { color: 'orange', icon: <ClockCircleOutlined /> };
+    }
+  };
+
+  const statusConfig = stockCheck ? getStatusConfig(stockCheck.status) : {};
+
+  if (!stockCheck) {
+    return (
+      <Modal
+        title="Chi tiết phiếu kiểm kê"
+        open={visible}
+        onCancel={onClose}
+        footer={[
+          <Button key="close" onClick={onClose}>
+            Đóng
+          </Button>
+        ]}
+      >
+        <p>Không có dữ liệu.</p>
+      </Modal>
+    );
+  }
+
+  const difference = (stockCheck.actualQuantity || 0) - (stockCheck.systemQuantity || 0);
+  const diffColor = difference > 0 ? 'green' : difference < 0 ? 'red' : 'blue';
+
   return (
     <Modal
-      title="Chi tiết phiếu kiểm kê"
+      title={
+        <Space align="center">
+          <Title level={4} style={{ margin: 0 }}>Chi tiết phiếu kiểm kê</Title>
+          <Tag color={statusConfig.color}>
+            {statusConfig.icon} {getStatusText(stockCheck.status)}
+          </Tag>
+        </Space>
+      }
       open={visible}
       onCancel={onClose}
+      width={600}
       footer={[
         <Button key="close" onClick={onClose}>
           Đóng
         </Button>
       ]}
     >
-      {stockCheck && (
-        <div>
-          <p><strong>Mã kiểm kê:</strong> {stockCheck.checkId}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <strong>Sản phẩm:</strong>
-            <Avatar 
-              src={stockCheck.productId?.image ? `http://localhost:5000${stockCheck.productId.image}` : null} 
-              icon={<PictureOutlined />}
-              size={32}
-              shape="square"
-            />
-            <span>{stockCheck.productId?.sku} - {stockCheck.productId?.name}</span>
-          </div>
-          <p><strong>Số lượng hệ thống:</strong> {stockCheck.systemQuantity}</p>
-          <p><strong>Số lượng thực tế:</strong> {stockCheck.actualQuantity}</p>
-          <p><strong>Chênh lệch:</strong> {(stockCheck.actualQuantity || 0) - (stockCheck.systemQuantity || 0)}</p>
-          <p><strong>Trạng thái:</strong> {getStatusText(stockCheck.status)}</p>
-          <p><strong>Người tạo:</strong> {stockCheck.createdBy?.fullName}</p>
-          <p><strong>Ngày tạo:</strong> {new Date(stockCheck.createdAt).toLocaleString('vi-VN')}</p>
-          {stockCheck.note && <p><strong>Ghi chú:</strong> {stockCheck.note}</p>}
-        </div>
-      )}
+      <Row gutter={[16, 16]}>
+        {/* Thông tin cơ bản */}
+        <Col span={24}>
+          <Card title="Thông tin kiểm kê" size="small">
+            <Row gutter={16}>
+              <Col span={8}>
+                <Text strong>Mã kiểm kê:</Text>
+                <br />
+                <Text>{stockCheck.checkId}</Text>
+              </Col>
+              <Col span={8}>
+                <Text strong>Ngày tạo:</Text>
+                <br />
+                <Text>{new Date(stockCheck.createdAt).toLocaleString('vi-VN')}</Text>
+              </Col>
+              <Col span={8}>
+                <Text strong>Người tạo:</Text>
+                <br />
+                <Text><UserOutlined /> {stockCheck.createdBy?.fullName || 'N/A'}</Text>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
+        {/* Thông tin sản phẩm */}
+        <Col span={24}>
+          <Card title="Thông tin sản phẩm" size="small">
+            <Row align="middle" gutter={16}>
+              <Col span={6}>
+                <Avatar
+                  src={stockCheck.productId?.image ? `http://localhost:5000${stockCheck.productId.image}` : null}
+                  icon={<PictureOutlined />}
+                  size={64}
+                  shape="square"
+                  style={{ width: 80, height: 80 }}
+                />
+              </Col>
+              <Col span={18}>
+                <Title level={5} style={{ margin: 0 }}>{stockCheck.productId?.sku}</Title>
+                <Text>{stockCheck.productId?.name}</Text>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
+        {/* Số lượng và chênh lệch */}
+        <Col span={24}>
+          <Card title="Số lượng" size="small">
+            <Row gutter={16}>
+              <Col span={12}>
+                <Space direction="vertical" size="small" style={{ width: '100%', textAlign: 'center', padding: '20px', border: '1px solid #d9d9d9', borderRadius: 8 }}>
+                  <Text type="secondary">Hệ thống</Text>
+                  <Title level={3} style={{ margin: 0 }}>{stockCheck.systemQuantity}</Title>
+                </Space>
+              </Col>
+              <Col span={12}>
+                <Space direction="vertical" size="small" style={{ width: '100%', textAlign: 'center', padding: '20px', border: '1px solid #d9d9d9', borderRadius: 8 }}>
+                  <Text type="secondary">Thực tế</Text>
+                  <Title level={3} style={{ margin: 0 }}>{stockCheck.actualQuantity}</Title>
+                </Space>
+              </Col>
+            </Row>
+            <Divider />
+            <Row justify="center">
+              <Col>
+                <Text strong style={{ color: diffColor }}>Chênh lệch: {difference > 0 ? '+' : ''}{difference}</Text>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
+        {/* Ghi chú */}
+        {stockCheck.note && (
+          <Col span={24}>
+            <Card title="Ghi chú" size="small">
+              <Text>{stockCheck.note}</Text>
+            </Card>
+          </Col>
+        )}
+      </Row>
     </Modal>
   );
 };

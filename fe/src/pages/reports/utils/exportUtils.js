@@ -47,6 +47,9 @@ export const exportToExcel = (reportData, reportType, reportTypes) => {
           ? item.unitPrice 
           : item.productId?.salePrice;
         
+        const user = item.createdBy;
+        const userInfo = user ? `${user.fullName} (${user.employeeCode || 'N/A'})` : '-';
+        
         return {
           'STT': index + 1,
           'Mã GD': transactionCode,
@@ -55,6 +58,7 @@ export const exportToExcel = (reportData, reportType, reportTypes) => {
           'Số lượng': Math.abs(item.quantity || 0),
           'Đơn giá': price || 0,
           'Ngày': date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+          'Người thực hiện': userInfo,
           'Ghi chú': item.note || item.customerInfo || ''
         };
       });
@@ -163,7 +167,7 @@ export const exportToPDF = (reportData, reportType, reportTypes) => {
       ]);
       break;
     case 'transactions':
-      columns = ['STT', 'Ma GD', 'Loai', 'San pham', 'So luong', 'Don gia', 'Ghi chu'];
+      columns = ['STT', 'Ma GD', 'Loai', 'San pham', 'So luong', 'Don gia', 'Nguoi thuc hien', 'Ghi chu'];
       rows = reportData.map((item, index) => {
         const id = item._id;
         const date = item.createdAt;
@@ -180,6 +184,9 @@ export const exportToPDF = (reportData, reportType, reportTypes) => {
         const price = item.transactionType === 'Import' 
           ? item.unitPrice 
           : item.productId?.salePrice;
+          
+        const user = item.createdBy;
+        const userInfo = user ? `${convertVietnameseToEnglish(user.fullName)} (${user.employeeCode || 'N/A'})` : '-';
         
         return [
           index + 1,
@@ -188,6 +195,7 @@ export const exportToPDF = (reportData, reportType, reportTypes) => {
           convertVietnameseToEnglish(`${item.productId?.sku} - ${item.productId?.name}`) || '',
           Math.abs(item.quantity || 0),
           (price || 0).toLocaleString() + ' dong',
+          userInfo,
           convertVietnameseToEnglish(item.note || item.customerInfo) || ''
         ];
       });

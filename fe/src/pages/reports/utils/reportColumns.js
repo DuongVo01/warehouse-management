@@ -120,6 +120,12 @@ export const transactionColumns = [
       return date ? new Date(date).toLocaleDateString('vi-VN') : '-';
     }
   },
+  { title: 'Người thực hiện', key: 'createdBy',
+    render: (_, record) => {
+      const user = record.createdBy;
+      return user ? `${user.fullName} (${user.employeeCode || 'N/A'})` : '-';
+    }
+  },
   { title: 'Ghi chú', key: 'note',
     render: (_, record) => record.note || record.customerInfo || '-'
   }
