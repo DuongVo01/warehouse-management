@@ -78,7 +78,8 @@ export const exportToExcel = (reportData, reportType, reportTypes) => {
         'Mã SP': item.productId?.sku || '',
         'Tên sản phẩm': item.productId?.name || '',
         'Tồn kho': item.quantity || 0,
-        'Hạn sử dụng': item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+        'Hạn sử dụng': item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : '',
+        'Vị trí': item.productId?.location || ''
       }));
       break;
     case 'expired':
@@ -87,7 +88,8 @@ export const exportToExcel = (reportData, reportType, reportTypes) => {
         'Mã SP': item.productId?.sku || '',
         'Tên sản phẩm': item.productId?.name || '',
         'Tồn kho': item.quantity || 0,
-        'Hạn sử dụng': item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+        'Hạn sử dụng': item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : '',
+        'Vị trí': item.productId?.location || ''
       }));
       break;
     default:
@@ -220,23 +222,25 @@ export const exportToPDF = (reportData, reportType, reportTypes) => {
       ]);
       break;
     case 'expiring':
-      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Han su dung'];
+      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Han su dung', 'Vi tri'];
       rows = reportData.map((item, index) => [
         index + 1,
         item.productId?.sku || '',
         convertVietnameseToEnglish(item.productId?.name) || '',
         item.quantity || 0,
-        item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+        item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : '',
+        convertVietnameseToEnglish(item.productId?.location) || ''
       ]);
       break;
     case 'expired':
-      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Han su dung'];
+      columns = ['STT', 'Ma SP', 'Ten san pham', 'Ton kho', 'Han su dung', 'Vi tri'];
       rows = reportData.map((item, index) => [
         index + 1,
         item.productId?.sku || '',
         convertVietnameseToEnglish(item.productId?.name) || '',
         item.quantity || 0,
-        item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : ''
+        item.productId?.expiryDate ? new Date(item.productId.expiryDate).toLocaleDateString('vi-VN') : '',
+        convertVietnameseToEnglish(item.productId?.location) || ''
       ]);
       break;
     default:
