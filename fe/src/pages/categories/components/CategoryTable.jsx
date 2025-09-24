@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, Button, Popconfirm, Space, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const CategoryTable = ({ categories, loading, onEdit, onDelete }) => {
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10
+  });
+
+  const handleTableChange = (paginationConfig) => {
+    setPagination({
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize
+    });
+  };
   const columns = [
     {
       title: 'STT',
@@ -83,10 +94,13 @@ const CategoryTable = ({ categories, loading, onEdit, onDelete }) => {
       rowKey="_id"
       loading={loading}
       pagination={{
-        pageSize: 10,
+        ...pagination,
         showSizeChanger: true,
+        showQuickJumper: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
         showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} danh mục`
       }}
+      onChange={handleTableChange}
     />
   );
 };

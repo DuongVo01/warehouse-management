@@ -43,16 +43,16 @@ const Categories = () => {
         <h2>Quản lý danh mục</h2>
       </div>
 
+      <CategoryFilters
+        onSearch={searchCategories}
+        onRefresh={loadCategories}
+      />
+      
       <div style={{ marginBottom: 16 }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
           Thêm danh mục
         </Button>
       </div>
-
-      <CategoryFilters
-        onSearch={searchCategories}
-        onRefresh={loadCategories}
-      />
 
       <CategoryTable
         categories={categories}
@@ -61,6 +61,8 @@ const Categories = () => {
         onDelete={deleteCategory}
       />
 
+
+      
       <CategoryModal
         visible={modalVisible}
         onCancel={handleCancel}

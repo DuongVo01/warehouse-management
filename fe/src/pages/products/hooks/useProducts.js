@@ -4,6 +4,7 @@ import { productAPI } from '../../../services/api/productAPI';
 
 export const useProducts = () => {
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadProducts = async (searchParams = {}) => {
@@ -13,12 +14,15 @@ export const useProducts = () => {
       const response = await productAPI.getProducts(params);
       if (response.data.success) {
         const activeProducts = response.data.data.filter(product => product.isActive !== false);
+        setAllProducts(Array.isArray(activeProducts) ? activeProducts : []);
         setProducts(Array.isArray(activeProducts) ? activeProducts : []);
       } else {
+        setAllProducts([]);
         setProducts([]);
         message.error(response.data.message || 'Không thể tải dữ liệu sản phẩm');
       }
     } catch (error) {
+      setAllProducts([]);
       setProducts([]);
       if (error.response?.status === 401) {
         message.error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
@@ -115,11 +119,35 @@ export const useProducts = () => {
     loadProducts();
   }, []);
 
+  const filterProducts = useCallback((searchText, categoryId) => {
+    let filtered = [...allProducts];
+    
+    // Lọc theo text
+    if (searchText) {
+      const search = searchText.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.sku?.toLowerCase().includes(search) ||
+        product.name?.toLowerCase().includes(search) ||
+        product.categoryId?.name?.toLowerCase().includes(search) ||
+        product.categoryId?.code?.toLowerCase().includes(search)
+      );
+    }
+    
+    // Lọc theo danh mục
+    if (categoryId && categoryId !== 'all') {
+      filtered = filtered.filter(product => product.categoryId?._id === categoryId);
+    }
+    
+    setProducts(filtered);
+  }, [allProducts]);
+
   return {
     products,
     loading,
     searchProducts,
     deleteProduct,
-    saveProduct
+    saveProduct,
+    filterProducts,
+    loadProducts
   };
 };

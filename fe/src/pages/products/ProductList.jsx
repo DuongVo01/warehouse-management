@@ -2,12 +2,12 @@ import React, { useState, useCallback } from 'react';
 import { Form } from 'antd';
 import dayjs from 'dayjs';
 import { useProducts } from './hooks/useProducts';
-import ProductSearch from './components/ProductSearch';
 import ProductTable from './components/ProductTable';
 import ProductForm from './components/ProductForm';
+import ProductFilters from './components/ProductFilters';
 
 const ProductList = () => {
-  const { products, loading, searchProducts, deleteProduct, saveProduct } = useProducts();
+  const { products, loading, searchProducts, deleteProduct, saveProduct, filterProducts, loadProducts } = useProducts();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [form] = Form.useForm();
@@ -79,7 +79,11 @@ const ProductList = () => {
         <h2>Quản lý sản phẩm</h2>
       </div>
       
-      <ProductSearch onSearch={handleSearch} onAdd={handleAdd} />
+      <ProductFilters
+        onFilter={filterProducts}
+        onRefresh={loadProducts}
+        onAdd={handleAdd}
+      />
       
       <ProductTable 
         products={products}
