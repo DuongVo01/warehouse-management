@@ -1,5 +1,6 @@
 const StockCheck = require('../models/StockCheck');
 const InventoryBalance = require('../models/InventoryBalance');
+const NotificationService = require('../services/notificationService');
 const InventoryTransaction = require('../models/InventoryTransaction');
 
 // Tạo kiểm kê mới
@@ -30,6 +31,17 @@ const createStockCheck = async (req, res) => {
     const populatedStockCheck = await StockCheck.findById(stockCheck._id)
       .populate('productId')
       .populate('createdBy', 'fullName employeeCode');
+
+    // Tạo thông báo cho Admin
+    await NotificationService.notifyStockCheckCreated(
+      stockCheck._id,
+      populatedStockCheck.productId.name,
+      {
+        fullName: req.user.fullName,
+        employeeCode: req.user.employeeCode,
+        userId: req.user._id
+      }
+    );
 
     res.status(201).json({ success: true, data: populatedStockCheck });
   } catch (error) {
@@ -94,6 +106,13 @@ const approveStockCheck = async (req, res) => {
         createdBy: req.user._id
       });
     }
+    
+    // Tạo thông báo cho người tạo phiếu kiểm kê
+    await NotificationService.notifyStockCheckApproved(
+      stockCheck._id,
+      stockCheck.productId.name,
+      stockCheck.createdBy
+    );
 
     res.json({ success: true, data: stockCheck });
   } catch (error) {

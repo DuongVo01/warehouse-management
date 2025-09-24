@@ -6,6 +6,7 @@ const { errorHandler, notFound, requestLogger } = require('./middleware');
 
 // Import routes
 const routes = require('./routes');
+const NotificationJob = require('./jobs/notificationJob');
 
 const app = express();
 
@@ -48,11 +49,15 @@ const startServer = async () => {
       fs.mkdirSync('./reports', { recursive: true });
     }
 
+    // Start notification jobs
+    NotificationJob.start();
+    
     // Start server
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       logger.info(`Server đang chạy trên port ${PORT}`);
       logger.info(`API endpoint: http://localhost:${PORT}/api`);
+      logger.info('Notification jobs started');
     });
   } catch (error) {
     logger.error('Lỗi khởi động server:', error);

@@ -1,20 +1,49 @@
 const InventoryTransaction = require('../../models/InventoryTransaction');
 const InventoryBalance = require('../../models/InventoryBalance');
+const NotificationService = require('../../services/notificationService');
 
 // Helper function cập nhật tồn kho
 const updateInventoryBalance = async (productId, quantityChange) => {
   const balance = await InventoryBalance.findOne({ productId });
   
   if (balance) {
+    const oldQuantity = balance.quantity;
     balance.quantity += quantityChange;
     balance.lastUpdated = new Date();
     await balance.save();
+    
+    // Kiểm tra nếu tồn kho giảm xuống dưới ngưỡng (10)
+    if (oldQuantity > 10 && balance.quantity <= 10) {
+      const product = await require('../../models/Product').findById(productId, 'name sku').lean();
+      if (product) {
+        await NotificationService.notifyLowStock(
+          productId,
+          balance.quantity,
+          product.name,
+          product.sku
+        );
+      }
+    }
   } else {
+    const newQuantity = Math.max(0, quantityChange);
     await InventoryBalance.create({
       productId,
-      quantity: Math.max(0, quantityChange),
+      quantity: newQuantity,
       lastUpdated: new Date()
     });
+    
+    // Kiểm tra nếu tồn kho mới đã thấp
+    if (newQuantity <= 10) {
+      const product = await require('../../models/Product').findById(productId, 'name sku').lean();
+      if (product) {
+        await NotificationService.notifyLowStock(
+          productId,
+          newQuantity,
+          product.name,
+          product.sku
+        );
+      }
+    }
   }
 };
 
@@ -42,6 +71,20 @@ const importInventory = async (req, res) => {
 
     await transaction.save();
     await updateInventoryBalance(productId, quantity);
+    
+    // Tạo thông báo
+    const product = await InventoryTransaction.findById(transaction._id).populate('productId');
+    await NotificationService.notifyTransaction(
+      req.user._id, 
+      'Import', 
+      product.productId.name, 
+      quantity,
+      {
+        fullName: req.user.fullName,
+        employeeCode: req.user.employeeCode,
+        role: req.user.role
+      }
+    );
 
     res.status(201).json({ success: true, data: transaction });
   } catch (error) {
@@ -81,6 +124,20 @@ const exportInventory = async (req, res) => {
 
     await transaction.save();
     await updateInventoryBalance(productId, -quantity);
+    
+    // Tạo thông báo
+    const product = await InventoryTransaction.findById(transaction._id).populate('productId');
+    await NotificationService.notifyTransaction(
+      req.user._id, 
+      'Export', 
+      product.productId.name, 
+      quantity,
+      {
+        fullName: req.user.fullName,
+        employeeCode: req.user.employeeCode,
+        role: req.user.role
+      }
+    );
 
     res.status(201).json({ success: true, data: transaction });
   } catch (error) {

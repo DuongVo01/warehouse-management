@@ -6,6 +6,7 @@ import {
   UserOutlined, 
   LogoutOutlined 
 } from '@ant-design/icons';
+import NotificationDropdown from '../../components/NotificationDropdown';
 
 const { Header } = Layout;
 
@@ -47,6 +48,7 @@ const AppHeader = ({ collapsed, onToggle, currentUser, userRole, onLogout, onPro
         style={{ marginLeft: -16 }}
       />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <NotificationDropdown />
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontWeight: '500', fontSize: '14px', lineHeight: '20px' }}>
             {currentUser?.fullName || currentUser?.FullName || 'Người dùng'}
