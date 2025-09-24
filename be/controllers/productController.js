@@ -3,17 +3,26 @@ const Product = require('../models/Product');
 // Tạo product mới
 const createProduct = async (req, res) => {
   try {
-    const { sku, name, unit, costPrice, salePrice, manufacturingDate, expiryDate, location } = req.body;
+    console.log('Request body:', req.body);
+    const { categoryId, name, unit, costPrice, salePrice, manufacturingDate, expiryDate, location } = req.body;
     
-    if (!sku || !name || !unit || costPrice === undefined || salePrice === undefined) {
+    // Kiểm tra từng trường
+    const missingFields = [];
+    if (!categoryId) missingFields.push('categoryId');
+    if (!name) missingFields.push('name');
+    if (!unit) missingFields.push('unit');
+    if (costPrice === undefined || costPrice === null) missingFields.push('costPrice');
+    if (salePrice === undefined || salePrice === null) missingFields.push('salePrice');
+    
+    if (missingFields.length > 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Thiếu thông tin bắt buộc' 
+        message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}` 
       });
     }
 
     const product = new Product({
-      sku,
+      categoryId,
       name,
       unit,
       costPrice,
@@ -49,6 +58,7 @@ const getAllProducts = async (req, res) => {
     }
     
     const products = await Product.find(filter)
+      .populate('categoryId', 'name code')
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });
       
@@ -61,7 +71,8 @@ const getAllProducts = async (req, res) => {
 // Cập nhật product
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .populate('categoryId', 'name code');
     if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
     }

@@ -51,6 +51,11 @@ const ProductTable = memo(({ products, loading, onEdit, onDelete }) => {
       key: 'sku',
     },
     {
+      title: 'Danh mục',
+      key: 'category',
+      render: (_, record) => record.categoryId ? `${record.categoryId.code} - ${record.categoryId.name}` : '-'
+    },
+    {
       title: 'Tên sản phẩm',
       dataIndex: 'name',
       key: 'name',

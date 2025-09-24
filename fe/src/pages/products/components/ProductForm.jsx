@@ -1,19 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, DatePicker, Upload, Avatar, message, Row, Col, Divider } from 'antd';
+import { Modal, Form, Input, InputNumber, DatePicker, Upload, Avatar, message, Row, Col, Divider, Select } from 'antd';
 import { UploadOutlined, PictureOutlined } from '@ant-design/icons';
+import { categoryAPI } from '../../../services/api/categoryAPI';
 
 const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoryAPI.getCategories();
+      if (response.data.success) {
+        setCategories(response.data.data.filter(cat => cat.status === 'active'));
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   useEffect(() => {
+    if (visible) {
+      loadCategories();
+    }
+    
     if (editingProduct?.image) {
       setImageUrl(`http://localhost:5000${editingProduct.image}`);
     } else {
       setImageUrl('');
     }
     setImageFile(null);
-  }, [editingProduct]);
+  }, [editingProduct, visible]);
 
   const handleImageSelect = ({ file }) => {
     setImageFile(file);
@@ -63,12 +80,18 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="sku"
-                label="Mã sản phẩm"
-                rules={[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]}
+                name="categoryId"
+                label="Danh mục"
+                rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
                 style={{ marginBottom: '16px' }}
               >
-                <Input placeholder="Nhập mã sản phẩm" />
+                <Select placeholder="Chọn danh mục sản phẩm">
+                  {categories.map(cat => (
+                    <Select.Option key={cat._id} value={cat._id}>
+                      {cat.code} - {cat.name}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -82,6 +105,15 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
               </Form.Item>
             </Col>
           </Row>
+          
+          {editingProduct?.sku && (
+            <Form.Item
+              label="Mã sản phẩm"
+              style={{ marginBottom: '16px' }}
+            >
+              <Input value={editingProduct.sku} disabled />
+            </Form.Item>
+          )}
           
           <Form.Item
             name="name"

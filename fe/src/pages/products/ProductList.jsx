@@ -25,7 +25,7 @@ const ProductList = () => {
   const handleEdit = useCallback((product) => {
     setEditingProduct(product);
     form.setFieldsValue({
-      sku: product.sku,
+      categoryId: product.categoryId?._id,
       name: product.name,
       unit: product.unit,
       costPrice: product.costPrice,
@@ -46,7 +46,7 @@ const ProductList = () => {
       const values = await form.validateFields();
       
       const productData = {
-        sku: values.sku,
+        categoryId: values.categoryId,
         name: values.name,
         unit: values.unit,
         costPrice: values.costPrice,
