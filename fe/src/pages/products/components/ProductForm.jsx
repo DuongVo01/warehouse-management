@@ -85,13 +85,21 @@ const ProductForm = ({ visible, editingProduct, form, onOk, onCancel }) => {
                 rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}
                 style={{ marginBottom: '16px' }}
               >
-                <Select placeholder="Chọn danh mục sản phẩm">
-                  {categories.map(cat => (
-                    <Select.Option key={cat._id} value={cat._id}>
-                      {cat.code} - {cat.name}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <Select 
+                  placeholder="Tìm kiếm và chọn danh mục..."
+                  showSearch
+                  filterOption={(input, option) => {
+                    const searchText = input.toLowerCase();
+                    const categoryText = `${option.code} - ${option.name}`.toLowerCase();
+                    return categoryText.includes(searchText);
+                  }}
+                  options={categories.map(cat => ({
+                    value: cat._id,
+                    label: `${cat.code} - ${cat.name}`,
+                    code: cat.code,
+                    name: cat.name
+                  }))}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
