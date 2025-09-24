@@ -59,13 +59,6 @@ const SupplierList = () => {
     <div>
       <div className="page-header">
         <h2>Quản lý nhà cung cấp</h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAdd}
-        >
-          Thêm nhà cung cấp
-        </Button>
       </div>
 
       <SupplierSearch
@@ -75,6 +68,12 @@ const SupplierList = () => {
         onFilterChange={setFilterStatus}
         onRefresh={loadSuppliers}
       />
+
+      <div style={{ marginBottom: 16 }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
+          Thêm nhà cung cấp
+        </Button>
+      </div>
 
       <SupplierTable 
         suppliers={suppliers}

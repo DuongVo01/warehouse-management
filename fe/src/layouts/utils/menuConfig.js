@@ -4,7 +4,8 @@ import {
   InboxOutlined,
   FileTextOutlined,
   TeamOutlined,
-  UserOutlined
+  UserOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons';
 
 export const getMenuByRole = (userRole) => {
@@ -26,6 +27,7 @@ export const getMenuByRole = (userRole) => {
         ]
       },
       { key: '/suppliers', icon: <TeamOutlined />, label: 'Nhà cung cấp' },
+      { key: '/categories', icon: <AppstoreOutlined />, label: 'Danh mục' },
       { key: '/reports', icon: <FileTextOutlined />, label: 'Báo cáo' },
       { key: '/users', icon: <UserOutlined />, label: 'Người dùng' }
     ];

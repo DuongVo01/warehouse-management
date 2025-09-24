@@ -10,6 +10,7 @@ const inventoryRoutes = require('./inventoryRoutes');
 const stockCheckRoutes = require('./stockCheckRoutes');
 const reportRoutes = require('./reportRoutes');
 const notificationRoutes = require('./notificationRoutes');
+const categoryRoutes = require('./categoryRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
@@ -20,5 +21,6 @@ router.use('/inventory', inventoryRoutes);
 router.use('/stock-checks', stockCheckRoutes);
 router.use('/reports', reportRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/categories', categoryRoutes);
 
 module.exports = router;

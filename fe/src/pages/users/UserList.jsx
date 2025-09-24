@@ -114,13 +114,9 @@ const UserList = () => {
         onFilterChange={handleFilterChange}
         onRefresh={handleRefresh}
       />
-      
-      <div style={{ marginBottom: 16, textAlign: 'right' }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAdd}
-        >
+
+      <div style={{ marginBottom: 16 }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
           Thêm người dùng
         </Button>
       </div>

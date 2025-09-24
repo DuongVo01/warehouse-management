@@ -13,6 +13,7 @@ import StockCheck from './pages/inventory/StockCheck';
 import SupplierList from './pages/suppliers/SupplierList';
 import ReportList from './pages/reports/ReportList';
 import UserList from './pages/users/UserList';
+import Categories from './pages/categories/Categories';
 import Profile from './pages/profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -61,6 +62,11 @@ function App() {
             <Route path="suppliers" element={
               <ProtectedRoute allowedRoles={['Admin']}>
                 <SupplierList />
+              </ProtectedRoute>
+            } />
+            <Route path="categories" element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <Categories />
               </ProtectedRoute>
             } />
             <Route path="reports" element={
