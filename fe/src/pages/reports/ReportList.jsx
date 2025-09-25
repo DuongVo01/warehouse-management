@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 // Components
@@ -13,6 +14,7 @@ import { exportToExcel, exportToPDF } from './utils/exportUtils';
 import { REPORT_TYPES } from './constants/reportTypes';
 
 const ReportList = () => {
+  const [searchParams] = useSearchParams();
   const [reportType, setReportType] = useState('inventory');
   const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()]);
   
@@ -34,9 +36,15 @@ const ReportList = () => {
   };
 
   useEffect(() => {
+    // Kiểm tra URL params để tự động chọn loại báo cáo
+    const typeParam = searchParams.get('type');
+    if (typeParam && ['inventory', 'transactions', 'lowstock', 'expiring', 'expired'].includes(typeParam)) {
+      setReportType(typeParam);
+    }
+    
     loadStats();
-    generateReport(reportType, dateRange);
-  }, []);
+    generateReport(typeParam || reportType, dateRange);
+  }, [searchParams]);
 
   useEffect(() => {
     generateReport(reportType, dateRange);

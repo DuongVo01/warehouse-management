@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dropdown, Badge, Button, List, Typography, Empty, Spin, Pagination, notification } from 'antd';
 import { BellOutlined, DeleteOutlined, CheckOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 
 const { Text } = Typography;
@@ -8,6 +9,7 @@ const { Text } = Typography;
 const NotificationDropdown = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [api, contextHolder] = notification.useNotification();
+  const navigate = useNavigate();
   
   const { 
     notifications, 
@@ -47,6 +49,35 @@ const NotificationDropdown = () => {
   const handleRefresh = () => {
     loadNotifications({ page: currentPage });
     showToast('info', 'Đã làm mới thông báo');
+  };
+  
+  const handleNotificationClick = (item) => {
+    // Đánh dấu đã đọc nếu chưa đọc
+    if (!item.isRead) {
+      handleMarkAsRead(item._id);
+    }
+    
+    // Điều hướng dựa trên loại thông báo
+    switch (item.category) {
+      case 'expiry':
+        navigate('/reports?type=expiring');
+        break;
+      case 'stock':
+        navigate('/inventory/balance');
+        break;
+      case 'stockcheck':
+        if (item.data?.stockCheckId) {
+          navigate(`/inventory/check?id=${item.data.stockCheckId}`);
+        } else {
+          navigate('/inventory/check');
+        }
+        break;
+      case 'transaction':
+        navigate('/reports?type=transactions');
+        break;
+      default:
+        break;
+    }
   };
 
   const getNotificationIcon = (type) => {
@@ -131,7 +162,7 @@ const NotificationDropdown = () => {
                 backgroundColor: item.isRead ? 'transparent' : '#f6ffed',
                 cursor: 'pointer'
               }}
-              onClick={() => !item.isRead && handleMarkAsRead(item._id)}
+              onClick={() => handleNotificationClick(item)}
               actions={[
                 <Button
                   type="text"

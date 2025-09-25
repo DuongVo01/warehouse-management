@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import { useStockCheck } from './hooks/useStockCheck';
 import StockCheckStatsCards from './components/StockCheckStatsCards';
 import StockCheckTable from './components/StockCheckTable';
@@ -9,6 +10,7 @@ import StockCheckDetailModal from './components/StockCheckDetailModal';
 import StockCheckSearch from './components/StockCheckSearch';
 
 const StockCheck = () => {
+  const [searchParams] = useSearchParams();
   const {
     stockChecks,
     products,
@@ -58,6 +60,17 @@ const StockCheck = () => {
     setSelectedCheck(record);
     setDetailModalVisible(true);
   };
+  
+  // Tự động mở chi tiết phiếu kiểm kê từ URL
+  useEffect(() => {
+    const stockCheckId = searchParams.get('id');
+    if (stockCheckId && stockChecks.length > 0) {
+      const targetCheck = stockChecks.find(check => check._id === stockCheckId);
+      if (targetCheck) {
+        handleViewDetail(targetCheck);
+      }
+    }
+  }, [searchParams, stockChecks]);
 
   const handleCloseModal = () => {
     setModalVisible(false);
