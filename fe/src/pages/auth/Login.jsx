@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../services/api/authAPI';
 
 const Login = ({ onLoginSuccess }) => {
@@ -49,6 +49,12 @@ const Login = ({ onLoginSuccess }) => {
               Đăng nhập
             </Button>
           </Form.Item>
+          
+          <div style={{ textAlign: 'center' }}>
+            <Link to="/forgot-password">
+              Quên mật khẩu?
+            </Link>
+          </div>
         </Form>
       </Card>
     </div>

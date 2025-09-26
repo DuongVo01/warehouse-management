@@ -4,6 +4,8 @@ import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/auth/Login';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Dashboard from './pages/dashboard/Dashboard';
 import ProductList from './pages/products/ProductList';
 import InventoryImport from './pages/inventory/InventoryImport';
@@ -34,6 +36,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login onLoginSuccess={() => setIsAuthenticated(true)} />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/" element={
             isAuthenticated ? <MainLayout /> : <Navigate to="/login" />
           }>

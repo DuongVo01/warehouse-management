@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const forgotPasswordController = require('../controllers/forgotPasswordController');
 const router = express.Router();
 
 // Login
@@ -80,5 +81,10 @@ router.get('/profile', auth, async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 });
+
+// Quên mật khẩu
+router.post('/forgot-password', forgotPasswordController.forgotPassword);
+router.get('/verify-reset-token', forgotPasswordController.verifyResetToken);
+router.post('/reset-password', forgotPasswordController.resetPassword);
 
 module.exports = router;
