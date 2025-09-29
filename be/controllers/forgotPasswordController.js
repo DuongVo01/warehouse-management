@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-const emailService = require('../services/mockEmailService');
+const emailService = require('../services/simpleEmailService');
 
 // Tạo token reset password
 const forgotPassword = async (req, res) => {
@@ -60,8 +60,7 @@ const forgotPassword = async (req, res) => {
     res.json({
       success: true,
       message: `Link đặt lại mật khẩu đã được gửi đến email ${user.email}`,
-      email: user.email,
-      resetLink: resetLink // For demo purposes
+      email: user.email
     });
   } catch (error) {
     res.status(500).json({

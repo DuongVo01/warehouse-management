@@ -20,8 +20,6 @@ const ForgotPassword = () => {
       });
       
       if (response.data.success) {
-        console.log('Reset link (check backend console):', response.data);
-        setResetToken(response.data.resetLink);
         setUsername(response.data.email);
         setCurrentStep(1);
         message.success(response.data.message);
@@ -116,27 +114,7 @@ const ForgotPassword = () => {
               </p>
             </div>
             
-            {resetToken && (
-              <div style={{ 
-                background: '#e6f7ff', 
-                border: '1px solid #91d5ff',
-                borderRadius: '6px',
-                padding: '16px',
-                marginBottom: '16px'
-              }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>
-                  🔗 Link đặt lại mật khẩu:
-                </p>
-                <Button 
-                  type="link" 
-                  href={resetToken}
-                  target="_blank"
-                  style={{ padding: 0, fontSize: '12px', wordBreak: 'break-all' }}
-                >
-                  {resetToken}
-                </Button>
-              </div>
-            )}
+
             
             <p>Vui lòng kiểm tra hộp thư đến hoặc click link trên để đặt lại mật khẩu.</p>
             <Button 

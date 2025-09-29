@@ -8,12 +8,15 @@ class SimpleEmailService {
     console.log('Email Sender:', process.env.EMAIL_SENDER);
     
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT),
-      secure: false, // true for 465, false for other ports
+      host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: false,
       auth: {
-        user: process.env.SMTP_USER,
+        user: process.env.SMTP_USER || 'apikey',
         pass: process.env.SMTP_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
   }
