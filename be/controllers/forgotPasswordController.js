@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-const emailService = require('../services/simpleEmailService');
+const emailService = require('../services/mockEmailService');
 
 // Tạo token reset password
 const forgotPassword = async (req, res) => {
@@ -60,7 +60,8 @@ const forgotPassword = async (req, res) => {
     res.json({
       success: true,
       message: `Link đặt lại mật khẩu đã được gửi đến email ${user.email}`,
-      email: user.email
+      email: user.email,
+      resetLink: resetLink // For demo purposes
     });
   } catch (error) {
     res.status(500).json({
@@ -110,6 +111,7 @@ const verifyResetToken = async (req, res) => {
 // Reset password với token
 const resetPassword = async (req, res) => {
   try {
+    console.log('Reset password request:', req.body);
     const { token, newPassword } = req.body;
     
     if (!token || !newPassword) {
@@ -131,17 +133,27 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Cập nhật mật khẩu mới
-    user.password = newPassword;
+    // Hash mật khẩu mới
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+    console.log('Updating password for user:', user.username);
+    
+    // Cập nhật mật khẩu mới (sử dụng passwordHash field)
+    user.passwordHash = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpiry = undefined;
     await user.save();
+    
+    console.log('Password updated successfully');
 
     res.json({
       success: true,
       message: 'Đặt lại mật khẩu thành công'
     });
   } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({
       success: false,
       message: error.message
